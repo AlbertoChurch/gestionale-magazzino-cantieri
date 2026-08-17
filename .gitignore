@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+gestionale.db
+
+# Materiale di lavoro personale, non parte del codice del progetto
+appunti progetto gestionale/
+.claude/
+CLAUDE.md
+_ponytail_test/
