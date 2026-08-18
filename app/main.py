@@ -121,3 +121,19 @@ def create_stato_lotti(stato_lotto: schemas.StatoLottoCreate, db: Session = Depe
 @app.get("/stato_lotti", response_model=list[schemas.StatoLottoRead])
 def leggi_stato_lotti(db: Session = Depends(get_db)):
     return db.query(models.StatoLotto).all()
+
+#materiale
+
+@app.post("/materiali", response_model=schemas.MaterialeRead)
+def create_materiali(materiale: schemas.MaterialeCreate, db: Session = Depends(get_db)):
+    tipi = db.query(models.TipoMateriale).filter(models.TipoMateriale.id.in_(materiale.tipo_materiale_ids)).all()
+    nuovo = models.Materiale(**materiale.model_dump(exclude={"tipo_materiale_ids"}))
+    db.add(nuovo)
+    nuovo.tipi_materiale = tipi
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/materiali", response_model=list[schemas.MaterialeRead])
+def leggi_materiali(db: Session = Depends(get_db)):
+    return db.query(models.Materiale).all()

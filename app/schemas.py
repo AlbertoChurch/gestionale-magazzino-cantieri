@@ -76,3 +76,18 @@ class StatoLottoCreate(BaseModel):
 class StatoLottoRead(StatoLottoCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
+
+#materiale
+class MaterialeCreate(BaseModel):
+    nome: str
+    fornitore_id: int
+    unita_misura_id: int
+    tipo_materiale_ids: list[int] = []
+
+class MaterialeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    nome: str
+    fornitore_id: int
+    unita_misura_id: int
+    tipi_materiale: list[TipoMaterialeRead] = []
