@@ -91,3 +91,20 @@ class MaterialeRead(BaseModel):
     fornitore_id: int
     unita_misura_id: int
     tipi_materiale: list[TipoMaterialeRead] = []
+
+#utente
+
+class UtenteCreate(BaseModel):
+    nome: str
+    cognome: str
+    email: str
+    password: str
+    ruolo_id: int
+
+class UtenteRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    nome: str
+    cognome: str
+    email: str
+    ruolo_id: int

@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 
+import hashlib, secrets
+
 app = FastAPI(title="Gestionale Magazzion/cantiere")
 
 @app.get("/")
@@ -125,7 +127,7 @@ def leggi_stato_lotti(db: Session = Depends(get_db)):
 #materiale
 
 @app.post("/materiali", response_model=schemas.MaterialeRead)
-def create_materiali(materiale: schemas.MaterialeCreate, db: Session = Depends(get_db)):
+def create_materiale(materiale: schemas.MaterialeCreate, db: Session = Depends(get_db)):
     tipi = db.query(models.TipoMateriale).filter(models.TipoMateriale.id.in_(materiale.tipo_materiale_ids)).all()
     nuovo = models.Materiale(**materiale.model_dump(exclude={"tipo_materiale_ids"}))
     db.add(nuovo)
@@ -137,3 +139,21 @@ def create_materiali(materiale: schemas.MaterialeCreate, db: Session = Depends(g
 @app.get("/materiali", response_model=list[schemas.MaterialeRead])
 def leggi_materiali(db: Session = Depends(get_db)):
     return db.query(models.Materiale).all()
+
+#utente
+
+@app.post("/utenti", response_model=schemas.UtenteRead)
+def create_utente(utente: schemas.UtenteCreate, db: Session = Depends(get_db)):
+    salt = secrets.token_bytes(16)
+    hash_password = hashlib.scrypt(utente.password.encode(), salt=salt, n=2**14, r=8, p=1)
+    password_hash = salt.hex() + "$" + hash_password.hex()
+
+    nuovo = models.Utente(**utente.model_dump(exclude={"password"}), password_hash=password_hash)
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/utenti", response_model=list[schemas.UtenteRead])
+def leggi_utenti(db: Session = Depends(get_db)):
+    return db.query(models.Utente).all()
