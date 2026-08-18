@@ -51,3 +51,73 @@ def create_tipo_posizione(tipo_posizione: schemas.TipoPosizioneCreate, db: Sessi
 @app.get("/tipo_posizioni", response_model=list[schemas.TipoPosizioneRead])
 def leggi_tipo_posizioni(db: Session = Depends(get_db)):
     return db.query(models.TipoPosizione).all()
+
+#Ruoli
+
+@app.post("/ruoli", response_model=schemas.RuoloRead)
+def create_ruoli(ruolo: schemas.RuoloCreate, db: Session = Depends(get_db)):
+    nuovo = models.Ruolo(**ruolo.model_dump())
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/ruoli", response_model=list[schemas.RuoloRead])
+def leggi_ruoli(db: Session = Depends(get_db)):
+    return db.query(models.Ruolo).all()
+
+#UnitaMisura
+
+@app.post("/unita_misura", response_model=schemas.UnitaMisuraRead)
+def create_unita_misura(unita_misura: schemas.UnitaMisuraCreate, db: Session = Depends(get_db)):
+    nuovo = models.UnitaMisura(**unita_misura.model_dump())
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/unita_misura", response_model=list[schemas.UnitaMisuraRead])
+def leggi_unita_misura(db: Session = Depends(get_db)):
+    return db.query(models.UnitaMisura).all()
+
+#TipoMateriali
+
+@app.post("/tipo_materiali", response_model=schemas.TipoMaterialeRead)
+def create_tipo_materiali(tipo_materiale: schemas.TipoMaterialeCreate, db: Session = Depends(get_db)):
+    nuovo = models.TipoMateriale(**tipo_materiale.model_dump())
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/tipo_materiali", response_model=list[schemas.TipoMaterialeRead])
+def leggi_tipo_materiali(db: Session = Depends(get_db)):
+    return db.query(models.TipoMateriale).all()
+
+#StatoOrdini
+
+@app.post("/stato_ordini", response_model=schemas.StatoOrdineRead)
+def create_stato_ordini(stato_ordine: schemas.StatoOrdineCreate, db: Session = Depends(get_db)):
+    nuovo = models.StatoOrdine(**stato_ordine.model_dump())
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/stato_ordini", response_model=list[schemas.StatoOrdineRead])
+def leggi_stato_ordini(db: Session = Depends(get_db)):
+    return db.query(models.StatoOrdine).all()
+
+#StatoLotti
+
+@app.post("/stato_lotti", response_model=schemas.StatoLottoRead)
+def create_stato_lotti(stato_lotto: schemas.StatoLottoCreate, db: Session = Depends(get_db)):
+    nuovo = models.StatoLotto(**stato_lotto.model_dump())
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/stato_lotti", response_model=list[schemas.StatoLottoRead])
+def leggi_stato_lotti(db: Session = Depends(get_db)):
+    return db.query(models.StatoLotto).all()
