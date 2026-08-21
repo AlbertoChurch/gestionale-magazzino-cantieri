@@ -206,3 +206,17 @@ def create_bolla(bolla: schemas.BollaCreate, db: Session = Depends(get_db)):
 @app.get("/bolle", response_model=list[schemas.BollaRead])
 def leggi_bolle(db: Session = Depends(get_db)):
     return db.query(models.Bolla).all()
+
+#BollaOrdine
+
+@app.post("/bolle-ordini", response_model=schemas.BollaOrdineRead)
+def create_bolla_ordine(bolla_ordine:schemas.BollaOrdineCreate, db: Session = Depends(get_db)):
+    nuovo = models.BollaOrdine(**bolla_ordine.model_dump())
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/bolle-ordini", response_model=list[schemas.BollaOrdineRead])
+def leggi_bolle_ordini(db: Session = Depends(get_db)):
+    return db.query(models.BollaOrdine).all()

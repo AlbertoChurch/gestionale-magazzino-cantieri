@@ -140,3 +140,12 @@ class BollaCreate(BaseModel):
 class BollaRead(BollaCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
+
+#BollaOrdine
+
+class BollaOrdineCreate(BaseModel):
+    bolla_id: int
+    ordine_id: int
+
+class BollaOrdineRead(BollaOrdineCreate):
+    model_config = ConfigDict(from_attributes=True)

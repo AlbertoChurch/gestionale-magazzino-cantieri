@@ -135,7 +135,7 @@ class Bolla(Base):
     numero: Mapped[str] = mapped_column(String(50))
 
 
-class BollaOdine(Base):
+class BollaOrdine(Base):
     __tablename__ = "bolle_ordini"
 
     bolla_id: Mapped[int] = mapped_column(ForeignKey("bolle.id"), primary_key=True)
