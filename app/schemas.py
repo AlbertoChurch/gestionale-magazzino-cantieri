@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
+from datetime import datetime
 
 #fornitori
 
@@ -108,3 +109,34 @@ class UtenteRead(BaseModel):
     cognome: str
     email: str
     ruolo_id: int
+
+#Ordine
+
+class OrdineCreate(BaseModel):
+    data_ordine: Optional[datetime] = None
+    utente_id: int
+    stato_ordine_id: int
+    fornitore_id: int
+
+class OrdineRead(OrdineCreate):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+#MaterialeOrdine
+class MaterialeOrdineCreate(BaseModel):
+    materiale_id: int
+    ordine_id: int
+    quantita: float
+
+class MaterialeOrdineRead(MaterialeOrdineCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+#Bolla
+
+class BollaCreate(BaseModel):
+    numero: str
+    data: Optional[datetime] = None
+
+class BollaRead(BollaCreate):
+    model_config = ConfigDict(from_attributes=True)
+    id: int

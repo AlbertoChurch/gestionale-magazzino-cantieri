@@ -5,6 +5,7 @@ from app import models, schemas
 from app.database import get_db
 
 import hashlib, secrets
+from datetime import datetime
 
 app = FastAPI(title="Gestionale Magazzion/cantiere")
 
@@ -157,3 +158,51 @@ def create_utente(utente: schemas.UtenteCreate, db: Session = Depends(get_db)):
 @app.get("/utenti", response_model=list[schemas.UtenteRead])
 def leggi_utenti(db: Session = Depends(get_db)):
     return db.query(models.Utente).all()
+
+#ordine
+
+@app.post("/ordini", response_model=schemas.OrdineRead)
+def create_ordine(ordine: schemas.OrdineCreate, db: Session = Depends(get_db)):
+    dati = ordine.model_dump()
+    if dati["data_ordine"] is None:
+        dati["data_ordine"] = datetime.now()
+    nuovo = models.Ordine(**dati)
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/ordini", response_model=list[schemas.OrdineRead])
+def leggi_ordini(db: Session = Depends(get_db)):
+    return db.query(models.Ordine).all()
+
+#materialeordine
+
+@app.post("/materiali-ordini", response_model=schemas.MaterialeOrdineRead)
+def create_materiale_ordine(materiale_ordine:schemas.MaterialeOrdineCreate, db: Session = Depends(get_db)):
+    nuovo = models.MaterialeOrdine(**materiale_ordine.model_dump())
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/materiali-ordini", response_model=list[schemas.MaterialeOrdineRead])
+def leggi_materiali_ordini(db: Session = Depends(get_db)):
+    return db.query(models.MaterialeOrdine).all()
+
+#Bolla
+
+@app.post("/bolle", response_model=schemas.BollaRead)
+def create_bolla(bolla: schemas.BollaCreate, db: Session = Depends(get_db)):
+    dati = bolla.model_dump()
+    if dati["data"] is None:
+        dati["data"] = datetime.now()
+    nuovo = models.Bolla(**dati)
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/bolle", response_model=list[schemas.BollaRead])
+def leggi_bolle(db: Session = Depends(get_db)):
+    return db.query(models.Bolla).all()
