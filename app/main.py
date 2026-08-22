@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -6,6 +6,7 @@ from app.database import get_db
 
 import hashlib, secrets
 from datetime import datetime
+from decimal import Decimal
 
 app = FastAPI(title="Gestionale Magazzion/cantiere")
 
@@ -220,3 +221,47 @@ def create_bolla_ordine(bolla_ordine:schemas.BollaOrdineCreate, db: Session = De
 @app.get("/bolle-ordini", response_model=list[schemas.BollaOrdineRead])
 def leggi_bolle_ordini(db: Session = Depends(get_db)):
     return db.query(models.BollaOrdine).all()
+
+#Lotto
+
+@app.post("/lotti", response_model=schemas.LottoRead)
+def create_lotto(lotto: schemas.LottoCreate, db: Session = Depends(get_db)):
+    dati = lotto.model_dump()
+    dati["quantita_disponibile"] = dati["quantita_iniziale"]
+    nuovo = models.Lotto(**dati)
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/lotti", response_model=list[schemas.LottoRead])
+def leggi_lotti(db: Session = Depends(get_db)):
+    return db.query(models.Lotto).all()
+
+#Movimento
+
+@app.post("/movimenti", response_model=schemas.MovimentoRead)
+def create_movimento(movimento: schemas.MovimentoCreate, db: Session = Depends(get_db)):
+    lotto = db.query(models.Lotto).filter(models.Lotto.id == movimento.lotto_id).first()
+    if lotto is None:
+        raise HTTPException(status_code=404, detail="Lotto non trovato")
+    posizione_arrivo = db.query(models.Posizione).filter(models.Posizione.id == movimento.posizione_arrivo_id).first()
+    if posizione_arrivo is None:
+        raise HTTPException(status_code=404, detail="Posizione di arrivo non trovata")
+    if posizione_arrivo.tipo_posizione.nome != "magazzino":
+        lotto.quantita_disponibile -= Decimal(str(movimento.quantita_usata)) # type: ignore
+    else:
+        lotto.quantita_disponibile += Decimal(str(movimento.quantita_usata)) # type: ignore
+    dati = movimento.model_dump()
+    if dati["data_movimento"] is None:
+        dati["data_movimento"] = datetime.now()
+    nuovo = models.Movimento(**dati)
+    db.add(nuovo)
+    db.commit()
+    db.refresh(nuovo)
+    return nuovo
+
+@app.get("/movimenti", response_model=list[schemas.MovimentoRead])
+def leggi_movimenti(db: Session = Depends(get_db)):
+    return db.query(models.Movimento).all()
+

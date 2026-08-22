@@ -149,3 +149,30 @@ class BollaOrdineCreate(BaseModel):
 
 class BollaOrdineRead(BollaOrdineCreate):
     model_config = ConfigDict(from_attributes=True)
+
+#Lotto
+
+class LottoCreate(BaseModel):
+    bolla_id: int
+    quantita_iniziale: float
+    stato_lotto_id: int 
+
+class LottoRead(LottoCreate):
+    model_config = ConfigDict(from_attributes=True)
+    quantita_disponibile: float
+    id: int
+
+#Movimento
+
+class MovimentoCreate(BaseModel):
+    lotto_id: int
+    posizione_partenza_id: Optional[int] = None
+    posizione_arrivo_id: int
+    quantita_usata: float
+    data_movimento: Optional[datetime] = None
+    note: Optional[str] = None
+
+class MovimentoRead(MovimentoCreate):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
