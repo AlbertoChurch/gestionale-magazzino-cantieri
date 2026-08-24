@@ -160,6 +160,20 @@ def create_utente(utente: schemas.UtenteCreate, db: Session = Depends(get_db)):
 def leggi_utenti(db: Session = Depends(get_db)):
     return db.query(models.Utente).all()
 
+@app.post("/login", response_model=schemas.UtenteRead)
+def login(login_request: schemas.LoginRequest, db: Session = Depends(get_db)):
+    utente = db.query(models.Utente).filter(models.Utente.email == login_request.email).first()
+    if utente is None:
+        raise HTTPException(status_code=401, detail="Credenziali non valide")
+    salt_hex, hash_hex = utente.password_hash.split("$")
+    salt = bytes.fromhex(salt_hex)
+    hash_atteso = bytes.fromhex(hash_hex)
+    hash_calcolato = hashlib.scrypt(login_request.password.encode(), salt=salt, n=2**14, r=8, p=1)
+    if not secrets.compare_digest(hash_calcolato, hash_atteso):
+        raise HTTPException(status_code=401, detail="Credenziali non valide")
+    return utente
+
+
 #ordine
 
 @app.post("/ordini", response_model=schemas.OrdineRead)

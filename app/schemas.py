@@ -110,6 +110,10 @@ class UtenteRead(BaseModel):
     email: str
     ruolo_id: int
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 #Ordine
 
 class OrdineCreate(BaseModel):
