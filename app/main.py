@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -9,6 +10,7 @@ from datetime import datetime
 from decimal import Decimal
 
 app = FastAPI(title="Gestionale Magazzion/cantiere")
+templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/")
 async def root():
@@ -279,3 +281,13 @@ def create_movimento(movimento: schemas.MovimentoCreate, db: Session = Depends(g
 def leggi_movimenti(db: Session = Depends(get_db)):
     return db.query(models.Movimento).all()
 
+#prova
+
+@app.get("/prova")
+def pagina_prova(request: Request):
+    return templates.TemplateResponse(request, "prova.html", {"messaggio": "Funziona!"})
+
+@app.get("/magazzino")
+def pagina_magazzino(request: Request, db: Session = Depends(get_db)):
+    lotti = db.query(models.Lotto).all()
+    return templates.TemplateResponse(request, "magazzino.html", {"lotti": lotti})

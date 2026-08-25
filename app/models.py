@@ -147,6 +147,8 @@ class StatoLotto(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     nome: Mapped[str] = mapped_column(String(50), unique=True, index=True)
 
+    lotti: Mapped[list["Lotto"]] = relationship(back_populates="stato_lotto")
+
 class Lotto(Base):
     __tablename__ = "lotti"
 
@@ -155,6 +157,8 @@ class Lotto(Base):
     quantita_iniziale: Mapped[float] = mapped_column(Numeric(10, 2), index=True)
     quantita_disponibile: Mapped[float] = mapped_column(Numeric(10, 2), index=True)
     stato_lotto_id: Mapped[int] = mapped_column(ForeignKey("stati_lotti.id"))
+    
+    stato_lotto: Mapped["StatoLotto"] = relationship(back_populates="lotti")
 
 class Movimento(Base):
     __tablename__ = "movimenti"

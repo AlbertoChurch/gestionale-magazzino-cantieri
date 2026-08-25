@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Magazzino</title></head>
+<body>
+    <h1>Magazzino</h1>
+    <table border="1">
+        <tr>
+            <th>Lotto</th>
+            <th>Quantità disponibile</th>
+            <th>Quantità iniziale</th>
+            <th>Stato</th>
+        </tr>
+        {% for lotto in lotti %}
+        <tr>
+            <td>{{ lotto.id }}</td>
+            <td>{{ lotto.quantita_disponibile }}</td>
+            <td>{{ lotto.quantita_iniziale }}</td>
+            <td>{{ lotto.stato_lotto.nome }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
