@@ -1,8 +1,137 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <head><title>Prova</title></head>
-        <body>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Prova</title>
+<style>
+    :root {
+        --bg1: #0f0c29;
+        --bg2: #302b63;
+        --bg3: #24243e;
+        --accent: #7f5af0;
+        --accent2: #2cb67d;
+        --text: #fffffe;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: linear-gradient(-45deg, var(--bg1), var(--bg2), var(--bg3), var(--bg2));
+        background-size: 400% 400%;
+        animation: sfondo 14s ease infinite;
+    }
+
+    @keyframes sfondo {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(60px);
+        opacity: 0.45;
+        animation: fluttua 9s ease-in-out infinite;
+    }
+    .blob.uno { width: 320px; height: 320px; background: var(--accent); top: 10%; left: 8%; animation-delay: 0s; }
+    .blob.due { width: 260px; height: 260px; background: var(--accent2); bottom: 12%; right: 10%; animation-delay: 2.5s; }
+    .blob.tre { width: 200px; height: 200px; background: #ff8ba7; top: 55%; left: 60%; animation-delay: 5s; }
+
+    @keyframes fluttua {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50%      { transform: translate(30px, -40px) scale(1.15); }
+    }
+
+    .scena {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card {
+        position: relative;
+        z-index: 2;
+        padding: 60px 80px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+        text-align: center;
+        animation: comparsa 0.9s cubic-bezier(.2, .9, .3, 1.3) both;
+    }
+
+    @keyframes comparsa {
+        from { opacity: 0; transform: translateY(40px) scale(0.9); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    h1 {
+        margin: 0;
+        font-size: clamp(2.2rem, 6vw, 4rem);
+        font-weight: 800;
+        letter-spacing: -1px;
+        background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: brillio 3.5s linear infinite;
+    }
+
+    @keyframes brillio {
+        to { background-position: 200% center; }
+    }
+
+    .sottotitolo {
+        margin-top: 14px;
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 0.95rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        animation: sottotitolo 0.9s ease 0.4s both;
+    }
+
+    @keyframes sottotitolo {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+
+    .puntino {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--accent2);
+        margin-right: 8px;
+        box-shadow: 0 0 12px var(--accent2);
+        animation: pulsa 1.4s ease-in-out infinite;
+        vertical-align: middle;
+    }
+
+    @keyframes pulsa {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50%      { transform: scale(1.6); opacity: 0.5; }
+    }
+</style>
+</head>
+<body>
+    <div class="scena">
+        <div class="blob uno"></div>
+        <div class="blob due"></div>
+        <div class="blob tre"></div>
+        <div class="card">
             <h1>{{ messaggio }}</h1>
-        </body>
+            <div class="sottotitolo"><span class="puntino"></span>Jinja2 &amp; FastAPI collegati</div>
+        </div>
+    </div>
+</body>
 </html>

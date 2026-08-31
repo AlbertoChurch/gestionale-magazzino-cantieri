@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head><title>Nuovo movimento</title></head>
+<body>
+    <h1>Registra movimento</h1>
+    <form method="post" action="/movimenti/nuovo">
+        <label>Lotto:
+            <select name="lotto_id">
+                {% for lotto in lotti %}
+                <option value="{{ lotto.id }}">Lotto #{{ lotto.id }} (disponibile: {{ lotto.quantita_disponibile }})</option>
+                {% endfor %}
+            </select>
+        </label><br>
+        <label>Posizione di partenza (opzionale):
+            <select name="posizione_partenza_id">
+                <option value="">-- nessuna --</option>
+                {% for posizione in posizioni %}
+                <option value="{{ posizione.id }}">{{ posizione.nome }}</option>
+                {% endfor %}
+            </select>
+        </label><br>
+        <label>Posizione di arrivo:
+            <select name="posizione_arrivo_id">
+                {% for posizione in posizioni %}
+                <option value="{{ posizione.id }}">{{ posizione.nome }}</option>
+                {% endfor %}
+            </select>
+        </label><br>
+        <label>Quantità: <input type="number" step="0.01" name="quantita_usata"></label><br>
+        <label>Note: <input type="text" name="note"></label><br>
+        <button type="submit">Registra</button>
+    </form>
+</body>
+</html>

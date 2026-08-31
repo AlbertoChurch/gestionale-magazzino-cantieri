@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, Form
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -258,6 +259,29 @@ def leggi_lotti(db: Session = Depends(get_db)):
 
 @app.post("/movimenti", response_model=schemas.MovimentoRead)
 def create_movimento(movimento: schemas.MovimentoCreate, db: Session = Depends(get_db)):
+    return registra_movimento(movimento, db)
+
+@app.post("/movimenti/nuovo")
+def crea_movimento_da_form(
+    lotto_id: int = Form(...),
+    posizione_partenza_id: str = Form(""),
+    posizione_arrivo_id: int = Form(...),
+    quantita_usata: float = Form(...),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    movimento = schemas.MovimentoCreate(
+        lotto_id=lotto_id,
+        posizione_partenza_id=int(posizione_partenza_id) if posizione_partenza_id else None,
+        posizione_arrivo_id=posizione_arrivo_id,
+        quantita_usata=quantita_usata,
+        note=note or None
+    )
+    registra_movimento(movimento, db)
+    return RedirectResponse(url="/magazzino", status_code=303)
+
+
+def registra_movimento(movimento: schemas.MovimentoCreate, db: Session):
     lotto = db.query(models.Lotto).filter(models.Lotto.id == movimento.lotto_id).first()
     if lotto is None:
         raise HTTPException(status_code=404, detail="Lotto non trovato")
@@ -265,6 +289,8 @@ def create_movimento(movimento: schemas.MovimentoCreate, db: Session = Depends(g
     if posizione_arrivo is None:
         raise HTTPException(status_code=404, detail="Posizione di arrivo non trovata")
     if posizione_arrivo.tipo_posizione.nome != "magazzino":
+        if lotto.quantita_disponibile < Decimal(str(movimento.quantita_usata)):
+            raise HTTPException(status_code=400, detail="Quantità richiesta superiore a quella disponibile")
         lotto.quantita_disponibile -= Decimal(str(movimento.quantita_usata)) # type: ignore
     else:
         lotto.quantita_disponibile += Decimal(str(movimento.quantita_usata)) # type: ignore
@@ -277,9 +303,16 @@ def create_movimento(movimento: schemas.MovimentoCreate, db: Session = Depends(g
     db.refresh(nuovo)
     return nuovo
 
+
 @app.get("/movimenti", response_model=list[schemas.MovimentoRead])
 def leggi_movimenti(db: Session = Depends(get_db)):
     return db.query(models.Movimento).all()
+
+@app.get("/movimenti/nuovo")
+def form_movimento(request: Request, db: Session = Depends(get_db)):
+    lotti = db.query(models.Lotto).all()
+    posizioni = db.query(models.Posizione).all()
+    return templates.TemplateResponse(request, "movimento_form.html", {"lotti": lotti, "posizioni": posizioni})
 
 #prova
 
@@ -291,3 +324,9 @@ def pagina_prova(request: Request):
 def pagina_magazzino(request: Request, db: Session = Depends(get_db)):
     lotti = db.query(models.Lotto).all()
     return templates.TemplateResponse(request, "magazzino.html", {"lotti": lotti})
+
+@app.get("/contesto")
+def pagina_contesto(request: Request, db: Session = Depends(get_db)):
+    fornitori = db.query(models.Fornitore).all()
+    ordini = db.query(models.Ordine).all()
+    return templates.TemplateResponse(request, "contesto.html", {"fornitori": fornitori, "ordini": ordini})

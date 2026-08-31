@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head><title>Fornitori e Ordini</title></head>
+<body>
+    <h1>Fornitori</h1>
+    <table border="1">
+        <tr><th>Nome</th><th>Email</th><th>Telefono</th></tr>
+        {% for fornitore in fornitori %}
+        <tr>
+            <td>{{ fornitore.nome }}</td>
+            <td>{{ fornitore.email }}</td>
+            <td>{{ fornitore.telefono }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h1>Ordini</h1>
+    <table border="1">
+        <tr><th>Fornitore</th><th>Stato</th><th>Data</th><th>Creato da</th></tr>
+        {% for ordine in ordini %}
+        <tr>
+            <td>{{ ordine.fornitore.nome }}</td>
+            <td>{{ ordine.stato_ordine.nome }}</td>
+            <td>{{ ordine.data_ordine }}</td>
+            <td>{{ ordine.utente.nome }} {{ ordine.utente.cognome }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
