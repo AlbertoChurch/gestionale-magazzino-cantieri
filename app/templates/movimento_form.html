@@ -44,7 +44,7 @@
                 </select>
             </label>
             <label>Quantità
-                <input type="number" step="0.01" id="quantita_usata" name="quantita_usata">
+                <input type="number" step="0.01" min="0.01" id="quantita_usata" name="quantita_usata" required>
             </label>
             <label>Condizione all'arrivo
                 <select id="condizione_id" name="condizione_id" onchange="segnalaModifica('condizione_id')">
@@ -67,7 +67,7 @@
         </div>
     </main>
     <script>
-        const lottiPerPosizione = {{ lotti_per_posizione_json | safe }};
+        const lottiPerPosizione = {{ lotti_per_posizione | tojson }};
         let valoriOriginali = { condizione_id: "", note: "" };
 
         function aggiornaMateriali() {

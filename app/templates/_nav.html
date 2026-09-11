@@ -53,11 +53,11 @@
             <a href="/fornitori/nuovo" class="{{ 'attivo' if request.url.path == '/fornitori/nuovo' else '' }}">Fornitore</a>
             <a href="/posizioni-elenco" class="{{ 'attivo' if request.url.path == '/posizioni-elenco' else '' }}">Posizione (magazzino/cantiere)</a>
             <a href="/materiali/nuovo" class="{{ 'attivo' if request.url.path == '/materiali/nuovo' else '' }}">Materiale</a>
-            <a href="/anagrafiche#gruppo-ruolo">Ruoli</a>
             <a href="/anagrafiche#gruppo-condizione_materiale">Condizioni materiale</a>
             <a href="/anagrafiche#gruppo-tipo_posizione">Tipi posizione</a>
             <a href="/anagrafiche#gruppo-unita_misura">Unità di misura</a>
             {% if utente and utente.ruolo.nome == "Amministratore" %}
+            <a href="/anagrafiche#gruppo-ruolo">Ruoli</a>
             <a href="/utenti/nuovo" class="{{ 'attivo' if request.url.path == '/utenti/nuovo' else '' }}">Account utente</a>
             {% endif %}
         </div>

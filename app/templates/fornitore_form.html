@@ -8,6 +8,9 @@
     {% include "_nav.html" %}
     <main>
         <h1>{{ "Modifica fornitore" if fornitore else "Nuovo fornitore" }}</h1>
+        {% if errore %}
+        <p class="errore">{{ errore }}</p>
+        {% endif %}
         <div class="card">
         <form method="post" action="{{ '/fornitori/' ~ fornitore.id ~ '/modifica' if fornitore else '/fornitori/nuovo' }}">
             <label>Nome <input type="text" name="nome" value="{{ fornitore.nome if fornitore else '' }}"></label>

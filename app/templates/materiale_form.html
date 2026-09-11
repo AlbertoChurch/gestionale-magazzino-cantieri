@@ -8,6 +8,9 @@
     {% include "_nav.html" %}
     <main>
         <h1>{{ "Modifica materiale" if materiale else "Nuovo materiale" }}</h1>
+        {% if errore %}
+        <p class="errore">{{ errore }}</p>
+        {% endif %}
         <div class="card">
         <form method="post" action="{{ '/materiali/' ~ materiale.id ~ '/modifica' if materiale else '/materiali/nuovo' }}">
             <label>Prodotto/materiale <input type="text" name="nome" value="{{ materiale.nome if materiale else '' }}"></label>

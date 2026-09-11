@@ -47,10 +47,10 @@
                         {% endfor %}
                     </select>
                     {% else %}
-                    <span class="errore">Nessun magazzino disponibile — creane uno prima da /aggiungi.</span>
+                    <span class="errore">Nessun magazzino disponibile — creane uno prima da "Aggiungi dati" → Posizione.</span>
                     {% endif %}
                 </label>
-                <button type="submit">Aggiungi</button>
+                <button type="submit" {% if not magazzini %}disabled{% endif %}>Aggiungi</button>
             </form>
         </div>
 

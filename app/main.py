@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from app import models, schemas
 from app.database import get_db
 
-import hashlib, secrets, json, os
+import hashlib, secrets, os
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
@@ -52,13 +52,37 @@ def elemento_in_uso(db: Session, *condizioni) -> bool:
     referenziare l'elemento) trova almeno una riga."""
     return any(db.query(modello).filter(condizione).first() is not None for modello, condizione in condizioni)
 
+
+# ponytail: sessioni in un dict in memoria di processo — si perdono a ogni
+# riavvio del server e non funzionano con più processi/worker. Va bene per
+# un solo utente/demo; se servirà login multi-processo o persistente,
+# passare a un vero session store (es. tabella nel database).
+sessioni: dict[str, int] = {}
+
+
+def get_utente_da_sessione(request: Request, db: Session = Depends(get_db)) -> models.Utente:
+    """Per pagine HTML e per gli endpoint JSON: se non autenticato, redirige a /login
+    (le pagine) o dà un 401 (le chiamate JSON, che non seguono redirect)."""
+    token = request.cookies.get("session_token")
+    utente_id = sessioni.get(token) if token else None
+    utente = db.query(models.Utente).filter(models.Utente.id == utente_id).first() if utente_id else None
+    if utente is None:
+        raise HTTPException(status_code=303, headers={"Location": "/login"})
+    return utente
+
+
+def richiedi_amministratore(utente: models.Utente):
+    if utente.ruolo.nome != "Amministratore":
+        raise HTTPException(status_code=403, detail="Solo un amministratore può farlo")
+
+
 @app.get("/")
 async def root():
     return {"status": "ok", "messaggio": "Gestionale attivo"}
 
 
 @app.post("/fornitori", response_model=schemas.FornitoreRead)
-def create_fornitore(fornitore: schemas.FornitoreCreate, db: Session = Depends(get_db)):
+def create_fornitore(fornitore: schemas.FornitoreCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     nuovo = models.Fornitore(**fornitore.model_dump())
     db.add(nuovo)
     db.commit()
@@ -66,12 +90,12 @@ def create_fornitore(fornitore: schemas.FornitoreCreate, db: Session = Depends(g
     return nuovo
 
 @app.get("/fornitori", response_model=list[schemas.FornitoreRead])
-def leggi_fornitori(db: Session = Depends(get_db)):
+def leggi_fornitori(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.Fornitore).all()
 
 
 @app.post("/posizioni", response_model=schemas.PosizioneRead)
-def create_posizione(posizione: schemas.PosizioneCreate, db: Session = Depends(get_db)):
+def create_posizione(posizione: schemas.PosizioneCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     nuovo = models.Posizione(**posizione.model_dump())
     db.add(nuovo)
     db.commit()
@@ -79,12 +103,12 @@ def create_posizione(posizione: schemas.PosizioneCreate, db: Session = Depends(g
     return nuovo
 
 @app.get("/posizioni", response_model=list[schemas.PosizioneRead])
-def leggi_posizioni(db: Session = Depends(get_db)):
+def leggi_posizioni(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.Posizione).all()
 
 
 @app.post("/tipo_posizioni", response_model=schemas.TipoPosizioneRead)
-def create_tipo_posizione(tipo_posizione: schemas.TipoPosizioneCreate, db: Session = Depends(get_db)):
+def create_tipo_posizione(tipo_posizione: schemas.TipoPosizioneCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     nuovo = models.TipoPosizione(**tipo_posizione.model_dump())
     db.add(nuovo)
     db.commit()
@@ -92,12 +116,13 @@ def create_tipo_posizione(tipo_posizione: schemas.TipoPosizioneCreate, db: Sessi
     return nuovo
 
 @app.get("/tipo_posizioni", response_model=list[schemas.TipoPosizioneRead])
-def leggi_tipo_posizioni(db: Session = Depends(get_db)):
+def leggi_tipo_posizioni(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.TipoPosizione).all()
 
 
 @app.post("/ruoli", response_model=schemas.RuoloRead)
-def create_ruoli(ruolo: schemas.RuoloCreate, db: Session = Depends(get_db)):
+def create_ruoli(ruolo: schemas.RuoloCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    richiedi_amministratore(utente)
     nuovo = models.Ruolo(**ruolo.model_dump())
     db.add(nuovo)
     db.commit()
@@ -105,12 +130,12 @@ def create_ruoli(ruolo: schemas.RuoloCreate, db: Session = Depends(get_db)):
     return nuovo
 
 @app.get("/ruoli", response_model=list[schemas.RuoloRead])
-def leggi_ruoli(db: Session = Depends(get_db)):
+def leggi_ruoli(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.Ruolo).all()
 
 
 @app.post("/unita_misura", response_model=schemas.UnitaMisuraRead)
-def create_unita_misura(unita_misura: schemas.UnitaMisuraCreate, db: Session = Depends(get_db)):
+def create_unita_misura(unita_misura: schemas.UnitaMisuraCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     nuovo = models.UnitaMisura(**unita_misura.model_dump())
     db.add(nuovo)
     db.commit()
@@ -118,12 +143,12 @@ def create_unita_misura(unita_misura: schemas.UnitaMisuraCreate, db: Session = D
     return nuovo
 
 @app.get("/unita_misura", response_model=list[schemas.UnitaMisuraRead])
-def leggi_unita_misura(db: Session = Depends(get_db)):
+def leggi_unita_misura(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.UnitaMisura).all()
 
 
 @app.post("/tipo_materiali", response_model=schemas.TipoMaterialeRead)
-def create_tipo_materiali(tipo_materiale: schemas.TipoMaterialeCreate, db: Session = Depends(get_db)):
+def create_tipo_materiali(tipo_materiale: schemas.TipoMaterialeCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     nuovo = models.TipoMateriale(**tipo_materiale.model_dump())
     db.add(nuovo)
     db.commit()
@@ -131,12 +156,12 @@ def create_tipo_materiali(tipo_materiale: schemas.TipoMaterialeCreate, db: Sessi
     return nuovo
 
 @app.get("/tipo_materiali", response_model=list[schemas.TipoMaterialeRead])
-def leggi_tipo_materiali(db: Session = Depends(get_db)):
+def leggi_tipo_materiali(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.TipoMateriale).all()
 
 
 @app.post("/condizioni_materiale", response_model=schemas.CondizioneMaterialeRead)
-def create_condizione_materiale(condizione: schemas.CondizioneMaterialeCreate, db: Session = Depends(get_db)):
+def create_condizione_materiale(condizione: schemas.CondizioneMaterialeCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     nuovo = models.CondizioneMateriale(**condizione.model_dump())
     db.add(nuovo)
     db.commit()
@@ -144,12 +169,12 @@ def create_condizione_materiale(condizione: schemas.CondizioneMaterialeCreate, d
     return nuovo
 
 @app.get("/condizioni_materiale", response_model=list[schemas.CondizioneMaterialeRead])
-def leggi_condizioni_materiale(db: Session = Depends(get_db)):
+def leggi_condizioni_materiale(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.CondizioneMateriale).all()
 
 
 @app.post("/materiali", response_model=schemas.MaterialeRead)
-def create_materiale(materiale: schemas.MaterialeCreate, db: Session = Depends(get_db)):
+def create_materiale(materiale: schemas.MaterialeCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     tipi = db.query(models.TipoMateriale).filter(models.TipoMateriale.id.in_(materiale.tipo_materiale_ids)).all()
     nuovo = models.Materiale(**materiale.model_dump(exclude={"tipo_materiale_ids"}))
     db.add(nuovo)
@@ -159,7 +184,7 @@ def create_materiale(materiale: schemas.MaterialeCreate, db: Session = Depends(g
     return nuovo
 
 @app.get("/materiali", response_model=list[schemas.MaterialeRead])
-def leggi_materiali(db: Session = Depends(get_db)):
+def leggi_materiali(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.Materiale).all()
 
 
@@ -170,7 +195,8 @@ def genera_password_hash(password: str) -> str:
 
 
 @app.post("/utenti", response_model=schemas.UtenteRead)
-def create_utente(utente: schemas.UtenteCreate, db: Session = Depends(get_db)):
+def create_utente(utente: schemas.UtenteCreate, db: Session = Depends(get_db), utente_sessione: models.Utente = Depends(get_utente_da_sessione)):
+    richiedi_amministratore(utente_sessione)
     nuovo = models.Utente(**utente.model_dump(exclude={"password"}), password_hash=genera_password_hash(utente.password))
     db.add(nuovo)
     db.commit()
@@ -178,7 +204,8 @@ def create_utente(utente: schemas.UtenteCreate, db: Session = Depends(get_db)):
     return nuovo
 
 @app.get("/utenti", response_model=list[schemas.UtenteRead])
-def leggi_utenti(db: Session = Depends(get_db)):
+def leggi_utenti(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    richiedi_amministratore(utente)
     return db.query(models.Utente).all()
 
 def verifica_credenziali(email: str, password: str, db: Session) -> models.Utente | None:
@@ -199,23 +226,6 @@ def login(login_request: schemas.LoginRequest, db: Session = Depends(get_db)):
     utente = verifica_credenziali(login_request.email, login_request.password, db)
     if utente is None:
         raise HTTPException(status_code=401, detail="Credenziali non valide")
-    return utente
-
-
-# ponytail: sessioni in un dict in memoria di processo — si perdono a ogni
-# riavvio del server e non funzionano con più processi/worker. Va bene per
-# un solo utente/demo; se servirà login multi-processo o persistente,
-# passare a un vero session store (es. tabella nel database).
-sessioni: dict[str, int] = {}
-
-
-def get_utente_da_sessione(request: Request, db: Session = Depends(get_db)) -> models.Utente:
-    """Per pagine HTML: se non autenticato, redirige a /login invece di dare un 401 grezzo."""
-    token = request.cookies.get("session_token")
-    utente_id = sessioni.get(token) if token else None
-    utente = db.query(models.Utente).filter(models.Utente.id == utente_id).first() if utente_id else None
-    if utente is None:
-        raise HTTPException(status_code=303, headers={"Location": "/login"})
     return utente
 
 
@@ -254,7 +264,7 @@ def logout(request: Request):
 
 
 @app.post("/bolle", response_model=schemas.BollaRead)
-def create_bolla(bolla: schemas.BollaCreate, db: Session = Depends(get_db)):
+def create_bolla(bolla: schemas.BollaCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     dati = bolla.model_dump()
     if dati["data"] is None:
         dati["data"] = datetime.now()
@@ -265,12 +275,12 @@ def create_bolla(bolla: schemas.BollaCreate, db: Session = Depends(get_db)):
     return nuovo
 
 @app.get("/bolle", response_model=list[schemas.BollaRead])
-def leggi_bolle(db: Session = Depends(get_db)):
+def leggi_bolle(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.Bolla).all()
 
 
 @app.post("/lotti", response_model=schemas.LottoRead)
-def create_lotto(lotto: schemas.LottoCreate, db: Session = Depends(get_db)):
+def create_lotto(lotto: schemas.LottoCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     dati = lotto.model_dump()
     dati["quantita_disponibile"] = dati["quantita_iniziale"]
     nuovo = models.Lotto(**dati)
@@ -280,12 +290,12 @@ def create_lotto(lotto: schemas.LottoCreate, db: Session = Depends(get_db)):
     return nuovo
 
 @app.get("/lotti", response_model=list[schemas.LottoRead])
-def leggi_lotti(db: Session = Depends(get_db)):
+def leggi_lotti(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.Lotto).all()
 
 
 @app.post("/movimenti", response_model=schemas.MovimentoRead)
-def create_movimento(movimento: schemas.MovimentoCreate, db: Session = Depends(get_db)):
+def create_movimento(movimento: schemas.MovimentoCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return registra_movimento(movimento, db)
 
 @app.post("/movimenti/nuovo")
@@ -318,6 +328,11 @@ def crea_movimento_da_form(
         contesto = contesto_form_movimento(db, utente)
         contesto["errore"] = errore.detail
         return templates.TemplateResponse(request, "movimento_form.html", contesto, status_code=errore.status_code)
+    except IntegrityError:
+        db.rollback()
+        contesto = contesto_form_movimento(db, utente)
+        contesto["errore"] = "Dato non più valido (es. condizione o posizione nel frattempo eliminata): riprova."
+        return templates.TemplateResponse(request, "movimento_form.html", contesto, status_code=400)
     return redirect_con_messaggio("/movimenti/nuovo", "Movimento registrato")
 
 
@@ -372,6 +387,15 @@ def righe_giacenza_lotto(lotto_id: int, db: Session) -> dict[RigaGiacenza, Decim
     return {chiave: q for chiave, q in saldi.items() if q > 0}
 
 
+def posizione_ha_giacenza(db: Session, posizione_id: int) -> bool:
+    """True se un qualsiasi lotto ha ancora del materiale fisicamente in questa posizione."""
+    for lotto in db.query(models.Lotto).filter(models.Lotto.quantita_disponibile > 0).all():
+        for (pid, _, _) in righe_giacenza_lotto(lotto.id, db):
+            if pid == posizione_id:
+                return True
+    return False
+
+
 def modifica_movimento_sicura(db: Session, movimento: "models.Movimento", quantita_usata: float, condizione_id: Optional[int], note: Optional[str], data_movimento: Optional[datetime]) -> Optional[str]:
     """Applica le modifiche e le committa SOLO se nessuna giacenza del lotto risulta
     negativa dopo il cambiamento (es. un movimento successivo che prelevava proprio da
@@ -412,6 +436,8 @@ def elimina_movimento_sicuro(db: Session, movimento: "models.Movimento") -> Opti
 
 
 def registra_movimento(movimento: schemas.MovimentoCreate, db: Session):
+    if movimento.quantita_usata <= 0:
+        raise HTTPException(status_code=400, detail="La quantità deve essere maggiore di zero")
     lotto = db.query(models.Lotto).filter(models.Lotto.id == movimento.lotto_id).first()
     if lotto is None:
         raise HTTPException(status_code=404, detail="Lotto non trovato")
@@ -444,7 +470,7 @@ def registra_movimento(movimento: schemas.MovimentoCreate, db: Session):
 
 
 @app.get("/movimenti", response_model=list[schemas.MovimentoRead])
-def leggi_movimenti(db: Session = Depends(get_db)):
+def leggi_movimenti(db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     return db.query(models.Movimento).all()
 
 def contesto_form_movimento(db: Session, utente: models.Utente) -> dict:
@@ -467,7 +493,7 @@ def contesto_form_movimento(db: Session, utente: models.Utente) -> dict:
     return {
         "posizioni": posizioni,
         "condizioni": condizioni,
-        "lotti_per_posizione_json": json.dumps(lotti_per_posizione),
+        "lotti_per_posizione": lotti_per_posizione,
         "utente": utente,
         "errore": None,
     }
@@ -504,9 +530,13 @@ def pagina_magazzino(request: Request, posizione_id: str = "", db: Session = Dep
         riga["sotto_soglia"] = float(riga["quantita"]) < float(riga["lotto"].quantita_iniziale) * 0.2
     posizioni = db.query(models.Posizione).all()
     posizione_selezionata = None
-    if posizione_id:
-        posizione_selezionata = db.query(models.Posizione).filter(models.Posizione.id == int(posizione_id)).first()
-        righe = [r for r in righe if r["posizione"] and r["posizione"].id == int(posizione_id)]
+    try:
+        id_posizione_filtro = int(posizione_id) if posizione_id else None
+    except ValueError:
+        id_posizione_filtro = None
+    if id_posizione_filtro is not None:
+        posizione_selezionata = db.query(models.Posizione).filter(models.Posizione.id == id_posizione_filtro).first()
+        righe = [r for r in righe if r["posizione"] and r["posizione"].id == id_posizione_filtro]
     return templates.TemplateResponse(request, "magazzino.html", {
         "righe": righe,
         "posizioni": posizioni,
@@ -537,7 +567,7 @@ def pagina_bolle(request: Request, anno: str = "", db: Session = Depends(get_db)
     limite = data_limite_archivio()
     bolle = db.query(models.Bolla).filter(models.Bolla.data >= limite).all()
     anni_disponibili = sorted({b.data.year for b in db.query(models.Bolla).all() if b.data}, reverse=True)
-    if anno:
+    if anno.isdigit():
         bolle = [b for b in bolle if b.data and b.data.year == int(anno)]
     bolle = sorted(bolle, key=lambda b: b.numero.lower())
     return templates.TemplateResponse(request, "bolle.html", {
@@ -584,6 +614,10 @@ CONTROLLI_USO_ANAGRAFICHE = {
     "tipo_posizione": lambda db, id_: elemento_in_uso(db, (models.Posizione, models.Posizione.tipo_posizione_id == id_)),
     "unita_misura": lambda db, id_: elemento_in_uso(db, (models.Materiale, models.Materiale.unita_misura_id == id_)),
 }
+assert set(CONTROLLI_USO_ANAGRAFICHE) == set(TABELLE_ANAGRAFICHE_SEMPLICI), (
+    "Ogni voce di TABELLE_ANAGRAFICHE_SEMPLICI deve avere un controllo 'in uso' corrispondente, "
+    "altrimenti l'eliminazione di quel tipo non controlla nulla."
+)
 
 
 def costruisci_gruppi_anagrafiche(db: Session) -> list[dict]:
@@ -609,6 +643,8 @@ def crea_anagrafica_semplice(
     voce = TABELLE_ANAGRAFICHE_SEMPLICI.get(tipo)
     if voce is None:
         raise HTTPException(status_code=404, detail="Tipo anagrafica sconosciuto")
+    if tipo == "ruolo":
+        richiedi_amministratore(utente)
     etichetta, Modello = voce
     nome = nome.strip()
     if valore_gia_esistente(db, Modello, nome):
@@ -638,6 +674,8 @@ def modifica_anagrafica_semplice(
     voce = TABELLE_ANAGRAFICHE_SEMPLICI.get(tipo)
     if voce is None:
         raise HTTPException(status_code=404, detail="Tipo anagrafica sconosciuto")
+    if tipo == "ruolo":
+        richiedi_amministratore(utente)
     etichetta, Modello = voce
     elemento = db.query(Modello).filter(Modello.id == elemento_id).first()
     if elemento is None:
@@ -668,6 +706,8 @@ def elimina_anagrafica_semplice(
     voce = TABELLE_ANAGRAFICHE_SEMPLICI.get(tipo)
     if voce is None:
         raise HTTPException(status_code=404, detail="Tipo anagrafica sconosciuto")
+    if tipo == "ruolo":
+        richiedi_amministratore(utente)
     _, Modello = voce
     elemento = db.query(Modello).filter(Modello.id == elemento_id).first()
     if elemento is None:
@@ -695,7 +735,7 @@ def _campi_fornitore_form(
     referente_2: str = Form(""),
 ) -> dict:
     return dict(
-        nome=nome,
+        nome=nome.strip(),
         email_generale=email_generale or None,
         email_commerciale=email_commerciale or None,
         email_tecnico=email_tecnico or None,
@@ -711,15 +751,23 @@ def _campi_fornitore_form(
 @app.get("/fornitori/nuovo")
 def form_fornitore(request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     fornitori = db.query(models.Fornitore).all()
-    return templates.TemplateResponse(request, "fornitore_form.html", {"utente": utente, "fornitori": fornitori, "fornitore": None})
+    return templates.TemplateResponse(request, "fornitore_form.html", {"utente": utente, "fornitori": fornitori, "fornitore": None, "errore": None})
 
 
 @app.post("/fornitori/nuovo")
 def crea_fornitore_da_form(
+    request: Request,
     campi: dict = Depends(_campi_fornitore_form),
     db: Session = Depends(get_db),
     utente: models.Utente = Depends(get_utente_da_sessione),
 ):
+    if valore_gia_esistente(db, models.Fornitore, campi["nome"]):
+        fornitori = db.query(models.Fornitore).all()
+        return templates.TemplateResponse(
+            request, "fornitore_form.html",
+            {"utente": utente, "fornitori": fornitori, "fornitore": None, "errore": f'"{campi["nome"]}" esiste già'},
+            status_code=400,
+        )
     db.add(models.Fornitore(**campi))
     db.commit()
     return redirect_con_messaggio("/fornitori/nuovo", "Fornitore aggiunto")
@@ -731,12 +779,13 @@ def form_modifica_fornitore(fornitore_id: int, request: Request, db: Session = D
     if fornitore is None:
         raise HTTPException(status_code=404, detail="Fornitore non trovato")
     fornitori = db.query(models.Fornitore).all()
-    return templates.TemplateResponse(request, "fornitore_form.html", {"utente": utente, "fornitori": fornitori, "fornitore": fornitore})
+    return templates.TemplateResponse(request, "fornitore_form.html", {"utente": utente, "fornitori": fornitori, "fornitore": fornitore, "errore": None})
 
 
 @app.post("/fornitori/{fornitore_id}/modifica")
 def modifica_fornitore(
     fornitore_id: int,
+    request: Request,
     campi: dict = Depends(_campi_fornitore_form),
     db: Session = Depends(get_db),
     utente: models.Utente = Depends(get_utente_da_sessione),
@@ -744,6 +793,13 @@ def modifica_fornitore(
     fornitore = db.query(models.Fornitore).filter(models.Fornitore.id == fornitore_id).first()
     if fornitore is None:
         raise HTTPException(status_code=404, detail="Fornitore non trovato")
+    if valore_gia_esistente(db, models.Fornitore, campi["nome"], escludi_id=fornitore_id):
+        fornitori = db.query(models.Fornitore).all()
+        return templates.TemplateResponse(
+            request, "fornitore_form.html",
+            {"utente": utente, "fornitori": fornitori, "fornitore": fornitore, "errore": f'"{campi["nome"]}" esiste già'},
+            status_code=400,
+        )
     for campo, valore in campi.items():
         setattr(fornitore, campo, valore)
     db.commit()
@@ -836,6 +892,8 @@ def chiudi_posizione(posizione_id: int, db: Session = Depends(get_db), utente: m
     posizione = db.query(models.Posizione).filter(models.Posizione.id == posizione_id).first()
     if posizione is None:
         raise HTTPException(status_code=404, detail="Posizione non trovata")
+    if posizione_ha_giacenza(db, posizione_id):
+        return redirect_con_messaggio("/posizioni-elenco", "Non puoi chiudere questa posizione: contiene ancora del materiale", tipo="avviso")
     posizione.data_chiusura = datetime.now()
     db.commit()
     return redirect_con_messaggio("/posizioni-elenco", "Posizione chiusa")
@@ -852,22 +910,45 @@ def riapri_posizione(posizione_id: int, db: Session = Depends(get_db), utente: m
 
 
 
+def _materiale_duplicato(db: Session, nome: str, fornitore_id: int, escludi_id: int | None = None) -> bool:
+    """Stesso nome, stesso fornitore (due fornitori diversi possono vendere lo stesso
+    prodotto con lo stesso nome, non è un duplicato)."""
+    query = db.query(models.Materiale).filter(
+        models.Materiale.fornitore_id == fornitore_id,
+        func.lower(func.trim(models.Materiale.nome)) == nome.strip().lower(),
+    )
+    if escludi_id is not None:
+        query = query.filter(models.Materiale.id != escludi_id)
+    return query.first() is not None
+
+
 @app.get("/materiali/nuovo")
 def form_materiale(request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     fornitori = db.query(models.Fornitore).all()
     unita = db.query(models.UnitaMisura).all()
     materiali = db.query(models.Materiale).all()
-    return templates.TemplateResponse(request, "materiale_form.html", {"fornitori": fornitori, "unita": unita, "materiali": materiali, "materiale": None, "utente": utente})
+    return templates.TemplateResponse(request, "materiale_form.html", {"fornitori": fornitori, "unita": unita, "materiali": materiali, "materiale": None, "utente": utente, "errore": None})
 
 
 @app.post("/materiali/nuovo")
 def crea_materiale_da_form(
+    request: Request,
     nome: str = Form(...),
     fornitore_id: int = Form(...),
     unita_misura_id: int = Form(...),
     db: Session = Depends(get_db),
     utente: models.Utente = Depends(get_utente_da_sessione),
 ):
+    nome = nome.strip()
+    if _materiale_duplicato(db, nome, fornitore_id):
+        fornitori = db.query(models.Fornitore).all()
+        unita = db.query(models.UnitaMisura).all()
+        materiali = db.query(models.Materiale).all()
+        return templates.TemplateResponse(
+            request, "materiale_form.html",
+            {"fornitori": fornitori, "unita": unita, "materiali": materiali, "materiale": None, "utente": utente, "errore": f'"{nome}" esiste già per questo fornitore'},
+            status_code=400,
+        )
     nuovo = models.Materiale(nome=nome, fornitore_id=fornitore_id, unita_misura_id=unita_misura_id)
     db.add(nuovo)
     db.commit()
@@ -882,12 +963,13 @@ def form_modifica_materiale(materiale_id: int, request: Request, db: Session = D
     fornitori = db.query(models.Fornitore).all()
     unita = db.query(models.UnitaMisura).all()
     materiali = db.query(models.Materiale).all()
-    return templates.TemplateResponse(request, "materiale_form.html", {"fornitori": fornitori, "unita": unita, "materiali": materiali, "materiale": materiale, "utente": utente})
+    return templates.TemplateResponse(request, "materiale_form.html", {"fornitori": fornitori, "unita": unita, "materiali": materiali, "materiale": materiale, "utente": utente, "errore": None})
 
 
 @app.post("/materiali/{materiale_id}/modifica")
 def modifica_materiale(
     materiale_id: int,
+    request: Request,
     nome: str = Form(...),
     fornitore_id: int = Form(...),
     unita_misura_id: int = Form(...),
@@ -897,6 +979,16 @@ def modifica_materiale(
     materiale = db.query(models.Materiale).filter(models.Materiale.id == materiale_id).first()
     if materiale is None:
         raise HTTPException(status_code=404, detail="Materiale non trovato")
+    nome = nome.strip()
+    if _materiale_duplicato(db, nome, fornitore_id, escludi_id=materiale_id):
+        fornitori = db.query(models.Fornitore).all()
+        unita = db.query(models.UnitaMisura).all()
+        materiali = db.query(models.Materiale).all()
+        return templates.TemplateResponse(
+            request, "materiale_form.html",
+            {"fornitori": fornitori, "unita": unita, "materiali": materiali, "materiale": materiale, "utente": utente, "errore": f'"{nome}" esiste già per questo fornitore'},
+            status_code=400,
+        )
     materiale.nome = nome
     materiale.fornitore_id = fornitore_id
     materiale.unita_misura_id = unita_misura_id
@@ -909,7 +1001,11 @@ def elimina_materiale(materiale_id: int, db: Session = Depends(get_db), utente: 
     materiale = db.query(models.Materiale).filter(models.Materiale.id == materiale_id).first()
     if materiale is None:
         raise HTTPException(status_code=404, detail="Materiale non trovato")
-    if elemento_in_uso(db, (models.Lotto, models.Lotto.materiale_id == materiale_id)):
+    if elemento_in_uso(
+        db,
+        (models.Lotto, models.Lotto.materiale_id == materiale_id),
+        (models.MaterialeTipoMateriale, models.MaterialeTipoMateriale.materiale_id == materiale_id),
+    ):
         return redirect_con_messaggio("/materiali/nuovo", "Non è possibile eliminare questo elemento perché già in uso", tipo="avviso")
     db.delete(materiale)
     db.commit()
@@ -981,6 +1077,14 @@ def crea_lotto_da_form(
     db: Session = Depends(get_db),
     utente: models.Utente = Depends(get_utente_da_sessione),
 ):
+    posizione = (
+        db.query(models.Posizione)
+        .join(models.TipoPosizione)
+        .filter(models.Posizione.id == posizione_iniziale_id, func.lower(func.trim(models.TipoPosizione.nome)) == "magazzino")
+        .first()
+    )
+    if posizione is None:
+        raise HTTPException(status_code=400, detail="La posizione scelta non è un magazzino")
     nuovo = models.Lotto(
         bolla_id=bolla_id,
         materiale_id=materiale_id,
@@ -1070,11 +1174,6 @@ def elimina_movimento(movimento_id: int, db: Session = Depends(get_db), utente: 
     if errore:
         return redirect_con_messaggio("/storico", errore, tipo="avviso")
     return redirect_con_messaggio("/storico", "Movimento eliminato")
-
-
-def richiedi_amministratore(utente: models.Utente):
-    if utente.ruolo.nome != "Amministratore":
-        raise HTTPException(status_code=403, detail="Solo un amministratore può farlo")
 
 
 @app.get("/utenti/nuovo")
