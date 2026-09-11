@@ -18,10 +18,14 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
         <span>Storico</span>
     </a>
+    <a href="/bolle/nuovo" class="{{ 'attivo' if request.url.path.startswith('/bolle/') else '' }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Inserimento materiale</span>
+    </a>
 
     <div class="nav-section">Gestione</div>
 
-    <a href="/bolle-elenco" class="{{ 'attivo' if request.url.path.startswith('/bolle-elenco') or request.url.path.startswith('/bolle/') else '' }}">
+    <a href="/bolle-elenco" class="{{ 'attivo' if request.url.path.startswith('/bolle-elenco') else '' }}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
         <span>Bolle</span>
     </a>
@@ -36,28 +40,20 @@
         <a href="/archivio/posizioni" class="{{ 'attivo' if request.url.path == '/archivio/posizioni' else '' }}">Cantieri/magazzini chiusi</a>
     </div>
 
-    <button type="button" class="nav-toggle {{ 'espanso' if request.url.path == '/anagrafiche' else '' }}" onclick="toggleSottomenu(this)">
+    {% set pagine_aggiungi_dati = ['/anagrafiche', '/fornitori/nuovo', '/posizioni-elenco', '/materiali/nuovo', '/utenti/nuovo'] %}
+    <button type="button" class="nav-toggle {{ 'espanso' if request.url.path in pagine_aggiungi_dati else '' }}" onclick="toggleSottomenu(this)">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="8" ry="2.5"/><path d="M4 5.5V12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5V5.5M4 12v6.5c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5V12"/></svg>
         <span>Aggiungi dati</span>
         <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
     </button>
-    <div class="nav-sottomenu {{ 'aperto' if request.url.path == '/anagrafiche' else '' }}">
+    <div class="nav-sottomenu {{ 'aperto' if request.url.path in pagine_aggiungi_dati else '' }}">
+        <a href="/fornitori/nuovo" class="{{ 'attivo' if request.url.path == '/fornitori/nuovo' else '' }}">Fornitore</a>
+        <a href="/posizioni-elenco" class="{{ 'attivo' if request.url.path == '/posizioni-elenco' else '' }}">Posizione (magazzino/cantiere)</a>
+        <a href="/materiali/nuovo" class="{{ 'attivo' if request.url.path == '/materiali/nuovo' else '' }}">Materiale</a>
         <a href="/anagrafiche#gruppo-ruolo">Ruoli</a>
         <a href="/anagrafiche#gruppo-condizione_materiale">Condizioni materiale</a>
         <a href="/anagrafiche#gruppo-tipo_posizione">Tipi posizione</a>
         <a href="/anagrafiche#gruppo-unita_misura">Unità di misura</a>
-    </div>
-
-    <button type="button" class="nav-toggle {{ 'espanso' if request.url.path in ['/fornitori/nuovo', '/posizioni-elenco', '/materiali/nuovo', '/bolle/nuovo', '/utenti/nuovo'] else '' }}" onclick="toggleSottomenu(this)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
-        <span>Aggiungi</span>
-        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
-    </button>
-    <div class="nav-sottomenu {{ 'aperto' if request.url.path in ['/fornitori/nuovo', '/posizioni-elenco', '/materiali/nuovo', '/bolle/nuovo', '/utenti/nuovo'] else '' }}">
-        <a href="/fornitori/nuovo" class="{{ 'attivo' if request.url.path == '/fornitori/nuovo' else '' }}">Fornitore</a>
-        <a href="/posizioni-elenco" class="{{ 'attivo' if request.url.path == '/posizioni-elenco' else '' }}">Posizione (magazzino/cantiere)</a>
-        <a href="/materiali/nuovo" class="{{ 'attivo' if request.url.path == '/materiali/nuovo' else '' }}">Materiale</a>
-        <a href="/bolle/nuovo" class="{{ 'attivo' if request.url.path == '/bolle/nuovo' else '' }}">Inserimento materiale (bolla)</a>
         {% if utente and utente.ruolo.nome == "Amministratore" %}
         <a href="/utenti/nuovo" class="{{ 'attivo' if request.url.path == '/utenti/nuovo' else '' }}">Account utente</a>
         {% endif %}
@@ -103,7 +99,7 @@
         setTimeout(function () {
             toast.classList.add('toast-esci');
             setTimeout(function () { toast.remove(); }, 250);
-        }, 3500);
+        }, 4500);
         parametri.delete('flash');
         parametri.delete('flash_tipo');
         const query = parametri.toString();

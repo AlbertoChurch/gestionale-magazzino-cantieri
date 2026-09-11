@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from app import models, schemas
 from app.database import get_db
 
-import hashlib, secrets, json
+import hashlib, secrets, json, os
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
@@ -18,6 +18,9 @@ from urllib.parse import quote
 app = FastAPI(title="Gestionale Magazzion/cantiere")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+# Versione basata sulla data di modifica del file: il browser scarica il CSS
+# aggiornato appena cambia, senza bisogno di ricordarsi di svuotare la cache.
+templates.env.globals["versione_css"] = lambda: int(os.path.getmtime("app/static/style.css"))
 
 
 @app.exception_handler(IntegrityError)
