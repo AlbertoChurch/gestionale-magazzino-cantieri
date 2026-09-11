@@ -7,24 +7,7 @@
 <body>
     {% include "_nav.html" %}
     <main>
-        <h1>Posizioni aperte</h1>
-        <div class="card">
-        <table>
-            <tr><th>Nome</th><th>Tipo</th><th>Indirizzo</th><th></th></tr>
-            {% for posizione in posizioni %}
-            <tr>
-                <td>{{ posizione.nome }}</td>
-                <td>{{ posizione.tipo_posizione.nome }}</td>
-                <td>{{ posizione.indirizzo or "—" }}</td>
-                <td>
-                    <form method="post" action="/posizioni/{{ posizione.id }}/chiudi" style="margin:0;">
-                        <button type="submit">Chiudi</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-        </div>
+        <h1>Posizioni</h1>
 
         <div class="card">
             <h2>Nuova posizione</h2>
@@ -40,6 +23,37 @@
                 </label>
                 <button type="submit">Crea</button>
             </form>
+        </div>
+
+        <div class="card">
+            <h2>Posizioni aperte</h2>
+            <ul class="lista-anagrafica">
+                {% for posizione in posizioni %}
+                <li class="riga-modificabile">
+                    <span class="nome-elemento">{{ posizione.nome }} — {{ posizione.tipo_posizione.nome }}{% if posizione.indirizzo %} — {{ posizione.indirizzo }}{% endif %}</span>
+                    <div class="azioni-riga">
+                        <button type="button" class="btn-secondario" onclick="mostraModificaInline(this)">Modifica</button>
+                        <form method="post" action="/posizioni/{{ posizione.id }}/chiudi">
+                            <button type="submit" class="btn-secondario">Chiudi</button>
+                        </form>
+                        <form method="post" action="/posizioni/{{ posizione.id }}/elimina">
+                            <button type="button" class="btn-secondario" onclick="chiediConferma(this)">Elimina</button>
+                        </form>
+                    </div>
+                    <form method="post" action="/posizioni/{{ posizione.id }}/modifica" class="form-modifica-inline" style="display:none;">
+                        <input type="text" name="nome" value="{{ posizione.nome }}" required>
+                        <input type="text" name="indirizzo" value="{{ posizione.indirizzo or '' }}" placeholder="indirizzo">
+                        <select name="tipo_posizione_id">
+                            {% for tipo in tipi %}
+                            <option value="{{ tipo.id }}" {% if tipo.id == posizione.tipo_posizione_id %}selected{% endif %}>{{ tipo.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Salva</button>
+                        <button type="button" class="btn-secondario" onclick="nascondiModificaInline(this)">Annulla</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </main>
 </body>

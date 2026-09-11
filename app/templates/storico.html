@@ -45,6 +45,7 @@
                 <th>Unità</th>
                 <th>Condizione</th>
                 <th>Note</th>
+                <th>Azioni</th>
             </tr>
             {% for m in movimenti %}
             <tr data-data="{{ m.data_movimento.strftime('%Y-%m-%d') if m.data_movimento else '' }}"
@@ -61,6 +62,14 @@
                 <td>{{ m.lotto.materiale.unita_misura.nome }}</td>
                 <td>{{ m.condizione.nome if m.condizione else "—" }}</td>
                 <td>{{ m.note or "" }}</td>
+                <td>
+                    <div class="azioni-riga">
+                        <a href="/movimenti/{{ m.id }}/modifica"><button type="button" class="btn-secondario">Modifica</button></a>
+                        <form method="post" action="/movimenti/{{ m.id }}/elimina">
+                            <button type="button" class="btn-secondario" onclick="chiediConferma(this)">Elimina</button>
+                        </form>
+                    </div>
+                </td>
             </tr>
             {% endfor %}
         </table>

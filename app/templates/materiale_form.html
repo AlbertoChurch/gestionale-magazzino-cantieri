@@ -1,32 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Nuovo materiale</title>
+    <title>{{ "Modifica materiale" if materiale else "Nuovo materiale" }}</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
 <body>
     {% include "_nav.html" %}
     <main>
-        <h1>Nuovo materiale</h1>
+        <h1>{{ "Modifica materiale" if materiale else "Nuovo materiale" }}</h1>
         <div class="card">
-        <form method="post" action="/materiali/nuovo">
-            <label>Prodotto/materiale <input type="text" name="nome"></label>
+        <form method="post" action="{{ '/materiali/' ~ materiale.id ~ '/modifica' if materiale else '/materiali/nuovo' }}">
+            <label>Prodotto/materiale <input type="text" name="nome" value="{{ materiale.nome if materiale else '' }}"></label>
             <label>Fornitore
                 <select name="fornitore_id">
                     {% for fornitore in fornitori %}
-                    <option value="{{ fornitore.id }}">{{ fornitore.nome }}</option>
+                    <option value="{{ fornitore.id }}" {% if materiale and materiale.fornitore_id == fornitore.id %}selected{% endif %}>{{ fornitore.nome }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label>Unità di misura
                 <select name="unita_misura_id">
                     {% for u in unita %}
-                    <option value="{{ u.id }}">{{ u.nome }}</option>
+                    <option value="{{ u.id }}" {% if materiale and materiale.unita_misura_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
                     {% endfor %}
                 </select>
             </label>
-            <button type="submit">Crea</button>
+            <button type="submit">{{ "Salva" if materiale else "Crea" }}</button>
+            {% if materiale %}<a href="/materiali/nuovo"><button type="button" class="btn-secondario">Annulla</button></a>{% endif %}
         </form>
+        </div>
+
+        <div class="card">
+            <h2>Materiali già inseriti</h2>
+            <ul class="lista-anagrafica">
+                {% for m in materiali %}
+                <li>
+                    <span class="nome-elemento">{{ m.nome }} — {{ m.fornitore.nome }}</span>
+                    <div class="azioni-riga">
+                        <a href="/materiali/{{ m.id }}/modifica"><button type="button" class="btn-secondario">Modifica</button></a>
+                        <form method="post" action="/materiali/{{ m.id }}/elimina">
+                            <button type="button" class="btn-secondario" onclick="chiediConferma(this)">Elimina</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </main>
 </body>

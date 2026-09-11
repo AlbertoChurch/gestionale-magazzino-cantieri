@@ -3,7 +3,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 
 from app import models, schemas
@@ -25,7 +25,7 @@ templates.env.globals["versione_css"] = lambda: int(os.path.getmtime("app/static
 
 @app.exception_handler(IntegrityError)
 async def gestisci_integrity_error(request: Request, exc: IntegrityError):
-    return JSONResponse(status_code=409, content={"detail": "Valore duplicato o dato non valido: controlla di non aver già inserito lo stesso valore."})
+    return JSONResponse(status_code=409, content={"detail": "Operazione non consentita: valore duplicato, dato non valido, oppure elemento ancora collegato ad altri dati."})
 
 
 def redirect_con_messaggio(url: str, messaggio: str, tipo: str = "ok") -> RedirectResponse:
@@ -38,10 +38,19 @@ def redirect_con_messaggio(url: str, messaggio: str, tipo: str = "ok") -> Redire
     return RedirectResponse(url=f"{base}{query}{'#' + ancora if ancora else ''}", status_code=303)
 
 
-def valore_gia_esistente(db: Session, modello, nome: str) -> bool:
-    """Controllo duplicati (spazi/maiuscole ignorati) prima di inserire, per dare un
-    errore chiaro invece di far esplodere il vincolo unique sul nome in database."""
-    return db.query(modello).filter(func.lower(func.trim(modello.nome)) == nome.strip().lower()).first() is not None
+def valore_gia_esistente(db: Session, modello, nome: str, escludi_id: int | None = None) -> bool:
+    """Controllo duplicati (spazi/maiuscole ignorati) prima di inserire o modificare, per
+    dare un errore chiaro invece di far esplodere il vincolo unique sul nome in database."""
+    query = db.query(modello).filter(func.lower(func.trim(modello.nome)) == nome.strip().lower())
+    if escludi_id is not None:
+        query = query.filter(modello.id != escludi_id)
+    return query.first() is not None
+
+
+def elemento_in_uso(db: Session, *condizioni) -> bool:
+    """True se una qualsiasi delle query passate (una per tabella che potrebbe
+    referenziare l'elemento) trova almeno una riga."""
+    return any(db.query(modello).filter(condizione).first() is not None for modello, condizione in condizioni)
 
 @app.get("/")
 async def root():
@@ -315,6 +324,42 @@ def crea_movimento_da_form(
 RigaGiacenza = tuple[int, Optional[int], Optional[str]]  # (posizione_id, condizione_id, note)
 
 
+def righe_giacenza_da_movimenti(movimenti) -> dict[RigaGiacenza, Decimal]:
+    """Saldo per ogni combinazione (posizione, condizione, nota) a partire da una lista
+    di movimenti già in memoria (usata sia per le Giacenze vere, sia per simulare
+    'cosa succederebbe se' prima di modificare/eliminare un movimento passato)."""
+    saldi: dict[RigaGiacenza, Decimal] = {}
+    for m in movimenti:
+        quantita = Decimal(str(m.quantita_usata))
+        chiave_arrivo = (m.posizione_arrivo_id, m.condizione_id, m.note)
+        saldi[chiave_arrivo] = saldi.get(chiave_arrivo, Decimal(0)) + quantita
+        if m.posizione_partenza_id is not None:
+            chiave_partenza = (m.posizione_partenza_id, m.condizione_partenza_id, m.nota_partenza)
+            saldi[chiave_partenza] = saldi.get(chiave_partenza, Decimal(0)) - quantita
+    return saldi
+
+
+def replay_giacenza_valido(movimenti) -> bool:
+    """Ripercorre i movimenti in ordine cronologico e controlla che nessuna giacenza sia
+    MAI andata negativa in nessun momento della storia. Non basta controllare il saldo
+    finale: un prelievo può risultare "coperto" solo da un arrivo successivo nel tempo,
+    il che vorrebbe dire che in quel momento la giacenza reale era negativa —
+    fisicamente impossibile, anche se il totale di oggi torna."""
+    ordinati = sorted(movimenti, key=lambda m: (m.data_movimento or datetime.min, m.id))
+    saldi: dict[RigaGiacenza, Decimal] = {}
+    for m in ordinati:
+        quantita = Decimal(str(m.quantita_usata))
+        if m.posizione_partenza_id is not None:
+            chiave_partenza = (m.posizione_partenza_id, m.condizione_partenza_id, m.nota_partenza)
+            nuovo_saldo = saldi.get(chiave_partenza, Decimal(0)) - quantita
+            if nuovo_saldo < 0:
+                return False
+            saldi[chiave_partenza] = nuovo_saldo
+        chiave_arrivo = (m.posizione_arrivo_id, m.condizione_id, m.note)
+        saldi[chiave_arrivo] = saldi.get(chiave_arrivo, Decimal(0)) + quantita
+    return True
+
+
 def righe_giacenza_lotto(lotto_id: int, db: Session) -> dict[RigaGiacenza, Decimal]:
     """Saldo del lotto per ogni combinazione (posizione, condizione, nota), sommando
     tutti i suoi movimenti (arrivi - partenze). Un lotto spostato solo in parte resta
@@ -322,14 +367,48 @@ def righe_giacenza_lotto(lotto_id: int, db: Session) -> dict[RigaGiacenza, Decim
     da quella di partenza genera una riga di giacenza distinta, anche nella stessa
     posizione (es. materiale rientrato "difettoso" non si somma a quello "nuovo" già
     presente lì)."""
-    saldi: dict[RigaGiacenza, Decimal] = {}
-    for m in db.query(models.Movimento).filter(models.Movimento.lotto_id == lotto_id).all():
-        chiave_arrivo = (m.posizione_arrivo_id, m.condizione_id, m.note)
-        saldi[chiave_arrivo] = saldi.get(chiave_arrivo, Decimal(0)) + m.quantita_usata
-        if m.posizione_partenza_id is not None:
-            chiave_partenza = (m.posizione_partenza_id, m.condizione_partenza_id, m.nota_partenza)
-            saldi[chiave_partenza] = saldi.get(chiave_partenza, Decimal(0)) - m.quantita_usata
+    movimenti = db.query(models.Movimento).filter(models.Movimento.lotto_id == lotto_id).all()
+    saldi = righe_giacenza_da_movimenti(movimenti)
     return {chiave: q for chiave, q in saldi.items() if q > 0}
+
+
+def modifica_movimento_sicura(db: Session, movimento: "models.Movimento", quantita_usata: float, condizione_id: Optional[int], note: Optional[str], data_movimento: Optional[datetime]) -> Optional[str]:
+    """Applica le modifiche e le committa SOLO se nessuna giacenza del lotto risulta
+    negativa dopo il cambiamento (es. un movimento successivo che prelevava proprio da
+    qui). In caso contrario annulla tutto e ritorna un messaggio d'errore."""
+    movimento.quantita_usata = quantita_usata
+    movimento.condizione_id = condizione_id
+    movimento.note = note
+    if data_movimento is not None:
+        movimento.data_movimento = data_movimento
+    db.flush()
+    tutti = db.query(models.Movimento).filter(models.Movimento.lotto_id == movimento.lotto_id).all()
+    if not replay_giacenza_valido(tutti):
+        db.rollback()
+        return "Questa modifica lascerebbe una giacenza negativa in un certo momento della storia: probabilmente un movimento successivo dipende dalla quantità che aveva spostato questo. Correggi prima quello."
+    if movimento.posizione_partenza_id is None:
+        # è l'arrivo iniziale del lotto: la quantità totale esistente segue quella del movimento
+        movimento.lotto.quantita_iniziale = quantita_usata
+        movimento.lotto.quantita_disponibile = quantita_usata
+    db.commit()
+    return None
+
+
+def elimina_movimento_sicuro(db: Session, movimento: "models.Movimento") -> Optional[str]:
+    """Elimina il movimento SOLO se non lascia nessuna giacenza negativa e non è
+    l'arrivo iniziale di un lotto (quello è legato alla creazione del lotto stesso,
+    non gestibile con una semplice eliminazione)."""
+    if movimento.posizione_partenza_id is None:
+        return "Non è possibile eliminare il movimento di arrivo iniziale di un lotto."
+    lotto_id = movimento.lotto_id
+    db.delete(movimento)
+    db.flush()
+    tutti = db.query(models.Movimento).filter(models.Movimento.lotto_id == lotto_id).all()
+    if not replay_giacenza_valido(tutti):
+        db.rollback()
+        return "Non è possibile eliminare questo movimento: un movimento successivo dipende dalla quantità che aveva spostato."
+    db.commit()
+    return None
 
 
 def registra_movimento(movimento: schemas.MovimentoCreate, db: Session):
@@ -496,6 +575,16 @@ TABELLE_ANAGRAFICHE_SEMPLICI = {
     "unita_misura": ("Unità di misura", models.UnitaMisura),
 }
 
+CONTROLLI_USO_ANAGRAFICHE = {
+    "ruolo": lambda db, id_: elemento_in_uso(db, (models.Utente, models.Utente.ruolo_id == id_)),
+    "condizione_materiale": lambda db, id_: elemento_in_uso(
+        db,
+        (models.Movimento, or_(models.Movimento.condizione_id == id_, models.Movimento.condizione_partenza_id == id_)),
+    ),
+    "tipo_posizione": lambda db, id_: elemento_in_uso(db, (models.Posizione, models.Posizione.tipo_posizione_id == id_)),
+    "unita_misura": lambda db, id_: elemento_in_uso(db, (models.Materiale, models.Materiale.unita_misura_id == id_)),
+}
+
 
 def costruisci_gruppi_anagrafiche(db: Session) -> list[dict]:
     return [
@@ -537,14 +626,63 @@ def crea_anagrafica_semplice(
     return redirect_con_messaggio(f"/anagrafiche#gruppo-{tipo}", f'"{nome}" aggiunto a {etichetta.lower()}')
 
 
+@app.post("/anagrafiche/{tipo}/{elemento_id}/modifica")
+def modifica_anagrafica_semplice(
+    request: Request,
+    tipo: str,
+    elemento_id: int,
+    nome: str = Form(...),
+    db: Session = Depends(get_db),
+    utente: models.Utente = Depends(get_utente_da_sessione),
+):
+    voce = TABELLE_ANAGRAFICHE_SEMPLICI.get(tipo)
+    if voce is None:
+        raise HTTPException(status_code=404, detail="Tipo anagrafica sconosciuto")
+    etichetta, Modello = voce
+    elemento = db.query(Modello).filter(Modello.id == elemento_id).first()
+    if elemento is None:
+        raise HTTPException(status_code=404, detail="Elemento non trovato")
+    nome = nome.strip()
+    if valore_gia_esistente(db, Modello, nome, escludi_id=elemento_id):
+        return templates.TemplateResponse(
+            request, "anagrafiche.html",
+            {
+                "gruppi": costruisci_gruppi_anagrafiche(db), "utente": utente,
+                "errore": f'"{nome}" esiste già in {etichetta.lower()}',
+                "gruppo_attivo": tipo,
+            },
+            status_code=400,
+        )
+    elemento.nome = nome
+    db.commit()
+    return redirect_con_messaggio(f"/anagrafiche#gruppo-{tipo}", f'"{nome}" modificato')
 
-@app.get("/fornitori/nuovo")
-def form_fornitore(request: Request, utente: models.Utente = Depends(get_utente_da_sessione)):
-    return templates.TemplateResponse(request, "fornitore_form.html", {"utente": utente})
+
+@app.post("/anagrafiche/{tipo}/{elemento_id}/elimina")
+def elimina_anagrafica_semplice(
+    tipo: str,
+    elemento_id: int,
+    db: Session = Depends(get_db),
+    utente: models.Utente = Depends(get_utente_da_sessione),
+):
+    voce = TABELLE_ANAGRAFICHE_SEMPLICI.get(tipo)
+    if voce is None:
+        raise HTTPException(status_code=404, detail="Tipo anagrafica sconosciuto")
+    _, Modello = voce
+    elemento = db.query(Modello).filter(Modello.id == elemento_id).first()
+    if elemento is None:
+        raise HTTPException(status_code=404, detail="Elemento non trovato")
+    controllo = CONTROLLI_USO_ANAGRAFICHE.get(tipo)
+    if controllo and controllo(db, elemento_id):
+        return redirect_con_messaggio(f"/anagrafiche#gruppo-{tipo}", "Non è possibile eliminare questo elemento perché già in uso", tipo="avviso")
+    nome = elemento.nome
+    db.delete(elemento)
+    db.commit()
+    return redirect_con_messaggio(f"/anagrafiche#gruppo-{tipo}", f'"{nome}" eliminato')
 
 
-@app.post("/fornitori/nuovo")
-def crea_fornitore_da_form(
+
+def _campi_fornitore_form(
     nome: str = Form(...),
     email_generale: str = Form(""),
     email_commerciale: str = Form(""),
@@ -555,10 +693,8 @@ def crea_fornitore_da_form(
     cellulare_2: str = Form(""),
     referente_1: str = Form(""),
     referente_2: str = Form(""),
-    db: Session = Depends(get_db),
-    utente: models.Utente = Depends(get_utente_da_sessione),
-):
-    nuovo = models.Fornitore(
+) -> dict:
+    return dict(
         nome=nome,
         email_generale=email_generale or None,
         email_commerciale=email_commerciale or None,
@@ -570,9 +706,64 @@ def crea_fornitore_da_form(
         referente_1=referente_1 or None,
         referente_2=referente_2 or None,
     )
-    db.add(nuovo)
+
+
+@app.get("/fornitori/nuovo")
+def form_fornitore(request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    fornitori = db.query(models.Fornitore).all()
+    return templates.TemplateResponse(request, "fornitore_form.html", {"utente": utente, "fornitori": fornitori, "fornitore": None})
+
+
+@app.post("/fornitori/nuovo")
+def crea_fornitore_da_form(
+    campi: dict = Depends(_campi_fornitore_form),
+    db: Session = Depends(get_db),
+    utente: models.Utente = Depends(get_utente_da_sessione),
+):
+    db.add(models.Fornitore(**campi))
     db.commit()
     return redirect_con_messaggio("/fornitori/nuovo", "Fornitore aggiunto")
+
+
+@app.get("/fornitori/{fornitore_id}/modifica")
+def form_modifica_fornitore(fornitore_id: int, request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    fornitore = db.query(models.Fornitore).filter(models.Fornitore.id == fornitore_id).first()
+    if fornitore is None:
+        raise HTTPException(status_code=404, detail="Fornitore non trovato")
+    fornitori = db.query(models.Fornitore).all()
+    return templates.TemplateResponse(request, "fornitore_form.html", {"utente": utente, "fornitori": fornitori, "fornitore": fornitore})
+
+
+@app.post("/fornitori/{fornitore_id}/modifica")
+def modifica_fornitore(
+    fornitore_id: int,
+    campi: dict = Depends(_campi_fornitore_form),
+    db: Session = Depends(get_db),
+    utente: models.Utente = Depends(get_utente_da_sessione),
+):
+    fornitore = db.query(models.Fornitore).filter(models.Fornitore.id == fornitore_id).first()
+    if fornitore is None:
+        raise HTTPException(status_code=404, detail="Fornitore non trovato")
+    for campo, valore in campi.items():
+        setattr(fornitore, campo, valore)
+    db.commit()
+    return redirect_con_messaggio("/fornitori/nuovo", "Fornitore modificato")
+
+
+@app.post("/fornitori/{fornitore_id}/elimina")
+def elimina_fornitore(fornitore_id: int, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    fornitore = db.query(models.Fornitore).filter(models.Fornitore.id == fornitore_id).first()
+    if fornitore is None:
+        raise HTTPException(status_code=404, detail="Fornitore non trovato")
+    if elemento_in_uso(
+        db,
+        (models.Materiale, models.Materiale.fornitore_id == fornitore_id),
+        (models.Bolla, models.Bolla.fornitore_id == fornitore_id),
+    ):
+        return redirect_con_messaggio("/fornitori/nuovo", "Non è possibile eliminare questo elemento perché già in uso", tipo="avviso")
+    db.delete(fornitore)
+    db.commit()
+    return redirect_con_messaggio("/fornitori/nuovo", "Fornitore eliminato")
 
 
 @app.get("/fornitori/{fornitore_id}")
@@ -606,6 +797,40 @@ def pagina_posizioni(request: Request, db: Session = Depends(get_db), utente: mo
     return templates.TemplateResponse(request, "posizioni_elenco.html", {"posizioni": posizioni, "tipi": tipi, "utente": utente})
 
 
+@app.post("/posizioni/{posizione_id}/modifica")
+def modifica_posizione(
+    posizione_id: int,
+    nome: str = Form(...),
+    indirizzo: str = Form(""),
+    tipo_posizione_id: int = Form(...),
+    db: Session = Depends(get_db),
+    utente: models.Utente = Depends(get_utente_da_sessione),
+):
+    posizione = db.query(models.Posizione).filter(models.Posizione.id == posizione_id).first()
+    if posizione is None:
+        raise HTTPException(status_code=404, detail="Posizione non trovata")
+    posizione.nome = nome.strip()
+    posizione.indirizzo = indirizzo.strip() or None
+    posizione.tipo_posizione_id = tipo_posizione_id
+    db.commit()
+    return redirect_con_messaggio("/posizioni-elenco", "Posizione modificata")
+
+
+@app.post("/posizioni/{posizione_id}/elimina")
+def elimina_posizione(posizione_id: int, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    posizione = db.query(models.Posizione).filter(models.Posizione.id == posizione_id).first()
+    if posizione is None:
+        raise HTTPException(status_code=404, detail="Posizione non trovata")
+    if elemento_in_uso(
+        db,
+        (models.Movimento, or_(models.Movimento.posizione_partenza_id == posizione_id, models.Movimento.posizione_arrivo_id == posizione_id)),
+    ):
+        return redirect_con_messaggio("/posizioni-elenco", "Non è possibile eliminare questo elemento perché già in uso", tipo="avviso")
+    db.delete(posizione)
+    db.commit()
+    return redirect_con_messaggio("/posizioni-elenco", "Posizione eliminata")
+
+
 @app.post("/posizioni/{posizione_id}/chiudi")
 def chiudi_posizione(posizione_id: int, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     posizione = db.query(models.Posizione).filter(models.Posizione.id == posizione_id).first()
@@ -631,7 +856,8 @@ def riapri_posizione(posizione_id: int, db: Session = Depends(get_db), utente: m
 def form_materiale(request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     fornitori = db.query(models.Fornitore).all()
     unita = db.query(models.UnitaMisura).all()
-    return templates.TemplateResponse(request, "materiale_form.html", {"fornitori": fornitori, "unita": unita, "utente": utente})
+    materiali = db.query(models.Materiale).all()
+    return templates.TemplateResponse(request, "materiale_form.html", {"fornitori": fornitori, "unita": unita, "materiali": materiali, "materiale": None, "utente": utente})
 
 
 @app.post("/materiali/nuovo")
@@ -646,6 +872,48 @@ def crea_materiale_da_form(
     db.add(nuovo)
     db.commit()
     return redirect_con_messaggio("/materiali/nuovo", "Materiale aggiunto")
+
+
+@app.get("/materiali/{materiale_id}/modifica")
+def form_modifica_materiale(materiale_id: int, request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    materiale = db.query(models.Materiale).filter(models.Materiale.id == materiale_id).first()
+    if materiale is None:
+        raise HTTPException(status_code=404, detail="Materiale non trovato")
+    fornitori = db.query(models.Fornitore).all()
+    unita = db.query(models.UnitaMisura).all()
+    materiali = db.query(models.Materiale).all()
+    return templates.TemplateResponse(request, "materiale_form.html", {"fornitori": fornitori, "unita": unita, "materiali": materiali, "materiale": materiale, "utente": utente})
+
+
+@app.post("/materiali/{materiale_id}/modifica")
+def modifica_materiale(
+    materiale_id: int,
+    nome: str = Form(...),
+    fornitore_id: int = Form(...),
+    unita_misura_id: int = Form(...),
+    db: Session = Depends(get_db),
+    utente: models.Utente = Depends(get_utente_da_sessione),
+):
+    materiale = db.query(models.Materiale).filter(models.Materiale.id == materiale_id).first()
+    if materiale is None:
+        raise HTTPException(status_code=404, detail="Materiale non trovato")
+    materiale.nome = nome
+    materiale.fornitore_id = fornitore_id
+    materiale.unita_misura_id = unita_misura_id
+    db.commit()
+    return redirect_con_messaggio("/materiali/nuovo", "Materiale modificato")
+
+
+@app.post("/materiali/{materiale_id}/elimina")
+def elimina_materiale(materiale_id: int, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    materiale = db.query(models.Materiale).filter(models.Materiale.id == materiale_id).first()
+    if materiale is None:
+        raise HTTPException(status_code=404, detail="Materiale non trovato")
+    if elemento_in_uso(db, (models.Lotto, models.Lotto.materiale_id == materiale_id)):
+        return redirect_con_messaggio("/materiali/nuovo", "Non è possibile eliminare questo elemento perché già in uso", tipo="avviso")
+    db.delete(materiale)
+    db.commit()
+    return redirect_con_messaggio("/materiali/nuovo", "Materiale eliminato")
 
 
 
@@ -761,6 +1029,47 @@ def pagina_storico(request: Request, db: Session = Depends(get_db), utente: mode
     )
     return templates.TemplateResponse(request, "storico.html", {"movimenti": movimenti, "utente": utente})
 
+
+@app.get("/movimenti/{movimento_id}/modifica")
+def form_modifica_movimento(movimento_id: int, request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    movimento = db.query(models.Movimento).filter(models.Movimento.id == movimento_id).first()
+    if movimento is None:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    condizioni = db.query(models.CondizioneMateriale).all()
+    return templates.TemplateResponse(request, "movimento_modifica.html", {"movimento": movimento, "condizioni": condizioni, "utente": utente, "errore": None})
+
+
+@app.post("/movimenti/{movimento_id}/modifica")
+def modifica_movimento(
+    movimento_id: int,
+    request: Request,
+    quantita_usata: float = Form(...),
+    condizione_id: str = Form(""),
+    note: str = Form(""),
+    data_movimento: str = Form(""),
+    db: Session = Depends(get_db),
+    utente: models.Utente = Depends(get_utente_da_sessione),
+):
+    movimento = db.query(models.Movimento).filter(models.Movimento.id == movimento_id).first()
+    if movimento is None:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    nuova_data = datetime.strptime(data_movimento, "%Y-%m-%dT%H:%M") if data_movimento else None
+    errore = modifica_movimento_sicura(db, movimento, quantita_usata, int(condizione_id) if condizione_id else None, note or None, nuova_data)
+    if errore:
+        condizioni = db.query(models.CondizioneMateriale).all()
+        return templates.TemplateResponse(request, "movimento_modifica.html", {"movimento": movimento, "condizioni": condizioni, "utente": utente, "errore": errore}, status_code=400)
+    return redirect_con_messaggio("/storico", "Movimento modificato")
+
+
+@app.post("/movimenti/{movimento_id}/elimina")
+def elimina_movimento(movimento_id: int, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    movimento = db.query(models.Movimento).filter(models.Movimento.id == movimento_id).first()
+    if movimento is None:
+        raise HTTPException(status_code=404, detail="Movimento non trovato")
+    errore = elimina_movimento_sicuro(db, movimento)
+    if errore:
+        return redirect_con_messaggio("/storico", errore, tipo="avviso")
+    return redirect_con_messaggio("/storico", "Movimento eliminato")
 
 
 def richiedi_amministratore(utente: models.Utente):

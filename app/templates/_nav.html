@@ -79,6 +79,29 @@
 </nav>
 <div id="toast-container"></div>
 <script>
+    function chiediConferma(bottone) {
+        const conferma = document.createElement('button');
+        conferma.type = 'submit';
+        conferma.className = 'conferma-elimina';
+        conferma.textContent = 'Sei sicuro?';
+        bottone.replaceWith(conferma);
+        conferma.focus();
+    }
+
+    function mostraModificaInline(bottone) {
+        const riga = bottone.closest('.riga-modificabile');
+        riga.querySelector('.nome-elemento').style.display = 'none';
+        riga.querySelector('.azioni-riga').style.display = 'none';
+        riga.querySelector('.form-modifica-inline').style.display = 'flex';
+    }
+
+    function nascondiModificaInline(bottone) {
+        const riga = bottone.closest('.riga-modificabile');
+        riga.querySelector('.form-modifica-inline').style.display = 'none';
+        riga.querySelector('.nome-elemento').style.display = '';
+        riga.querySelector('.azioni-riga').style.display = '';
+    }
+
     function toggleSottomenu(bottone) {
         const eraAperto = bottone.classList.contains('espanso');
         document.querySelectorAll('.nav-toggle.espanso').forEach(function (altro) {
@@ -101,7 +124,8 @@
         const parametri = new URLSearchParams(location.search);
         const messaggio = parametri.get('flash');
         if (!messaggio) return;
-        const tipo = parametri.get('flash_tipo') === 'errore' ? 'toast-errore' : 'toast-ok';
+        const tipoParametro = parametri.get('flash_tipo');
+        const tipo = tipoParametro === 'errore' ? 'toast-errore' : tipoParametro === 'avviso' ? 'toast-avviso' : 'toast-ok';
         const toast = document.createElement('div');
         toast.className = 'toast ' + tipo;
         toast.textContent = messaggio;

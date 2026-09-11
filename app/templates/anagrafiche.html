@@ -16,15 +16,28 @@
             {% if errore and gruppo_attivo == gruppo.chiave %}
             <p class="errore">{{ errore }}</p>
             {% endif %}
-            <ul>
-                {% for elemento in gruppo.elementi %}
-                <li>{{ elemento.nome }}</li>
-                {% endfor %}
-            </ul>
             <form method="post" action="/anagrafiche/{{ gruppo.chiave }}">
                 <label>Nuovo valore <input type="text" name="nome" required></label>
                 <button type="submit">Aggiungi</button>
             </form>
+            <ul class="lista-anagrafica">
+                {% for elemento in gruppo.elementi %}
+                <li class="riga-modificabile">
+                    <span class="nome-elemento">{{ elemento.nome }}</span>
+                    <div class="azioni-riga">
+                        <button type="button" class="btn-secondario" onclick="mostraModificaInline(this)">Modifica</button>
+                        <form method="post" action="/anagrafiche/{{ gruppo.chiave }}/{{ elemento.id }}/elimina">
+                            <button type="button" class="btn-secondario" onclick="chiediConferma(this)">Elimina</button>
+                        </form>
+                    </div>
+                    <form method="post" action="/anagrafiche/{{ gruppo.chiave }}/{{ elemento.id }}/modifica" class="form-modifica-inline" style="display:none;">
+                        <input type="text" name="nome" value="{{ elemento.nome }}" required>
+                        <button type="submit">Salva</button>
+                        <button type="button" class="btn-secondario" onclick="nascondiModificaInline(this)">Annulla</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
         {% endfor %}
     </main>
