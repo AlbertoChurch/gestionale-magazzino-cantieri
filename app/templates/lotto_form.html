@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Materiali della bolla {{ bolla.numero }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% include "_nav.html" %}
+    <main>
+        <h1>Bolla {{ bolla.numero }}</h1>
+        <p>Ordine di riferimento: {{ bolla.numero_ordine_riferimento or "—" }}</p>
+
+        {% if lotti_aggiunti %}
+        <div class="card">
+            <h2>Materiali già aggiunti</h2>
+            <ul class="ricevuta">
+                {% for lotto in lotti_aggiunti %}
+                <li>{{ lotto.materiale.nome }} — {{ lotto.quantita_iniziale }} — {{ lotto.condizione_iniziale.nome if lotto.condizione_iniziale else "—" }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h2>Aggiungi materiale</h2>
+            <form method="post" action="/bolle/{{ bolla.id }}/lotti/nuovo">
+                <label>Materiale
+                    <select name="materiale_id">
+                        {% for materiale in materiali %}
+                        <option value="{{ materiale.id }}">{{ materiale.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Quantità <input type="number" step="0.01" name="quantita_iniziale"></label>
+                <label>Condizione
+                    <select name="condizione_id">
+                        {% for condizione in condizioni %}
+                        <option value="{{ condizione.id }}">{{ condizione.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>In quale magazzino arriva
+                    {% if magazzini %}
+                    <select name="posizione_iniziale_id">
+                        {% for magazzino in magazzini %}
+                        <option value="{{ magazzino.id }}">{{ magazzino.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <span class="errore">Nessun magazzino disponibile — creane uno prima da /aggiungi.</span>
+                    {% endif %}
+                </label>
+                <button type="submit">Aggiungi</button>
+            </form>
+        </div>
+
+        <a href="/magazzino"><button type="button">Fine, vai alle giacenze</button></a>
+    </main>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nuovo fornitore</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% include "_nav.html" %}
+    <main>
+        <h1>Nuovo fornitore</h1>
+        <div class="card">
+        <form method="post" action="/fornitori/nuovo">
+            <label>Nome <input type="text" name="nome"></label>
+            <label>Referente 1 <input type="text" name="referente_1"></label>
+            <label>Referente 2 <input type="text" name="referente_2"></label>
+            <label>Email generale <input type="email" name="email_generale"></label>
+            <label>Email commerciale <input type="email" name="email_commerciale"></label>
+            <label>Email tecnico <input type="email" name="email_tecnico"></label>
+            <label>Email amministrazione <input type="email" name="email_amministrazione"></label>
+            <label>Telefono fisso <input type="text" name="telefono_fisso"></label>
+            <label>Cellulare 1 <input type="text" name="cellulare_1"></label>
+            <label>Cellulare 2 <input type="text" name="cellulare_2"></label>
+            <button type="submit">Crea</button>
+        </form>
+        </div>
+    </main>
+</body>
+</html>

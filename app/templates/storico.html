@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Storico movimenti</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% include "_nav.html" %}
+    <main>
+        <h1>Storico movimenti</h1>
+
+        <div class="card filtri-storico">
+            <label>Dal
+                <input type="date" id="f-data-da" onchange="filtraStorico()">
+            </label>
+            <label>Al
+                <input type="date" id="f-data-a" onchange="filtraStorico()">
+            </label>
+            <label>Materiale
+                <select id="f-materiale" onchange="filtraStorico()"><option value="">-- tutti --</option></select>
+            </label>
+            <label>Da (posizione)
+                <select id="f-partenza" onchange="filtraStorico()"><option value="">-- tutte --</option></select>
+            </label>
+            <label>A (posizione)
+                <select id="f-arrivo" onchange="filtraStorico()"><option value="">-- tutte --</option></select>
+            </label>
+            <label>Condizione
+                <select id="f-condizione" onchange="filtraStorico()"><option value="">-- tutte --</option></select>
+            </label>
+            <label>Note contengono
+                <input type="text" id="f-note" oninput="filtraStorico()" placeholder="cerca nelle note...">
+            </label>
+            <button type="button" onclick="azzeraFiltriStorico()">Azzera filtri</button>
+        </div>
+
+        <div class="card">
+        <table>
+            <tr>
+                <th>Data</th>
+                <th>Materiale</th>
+                <th>Da</th>
+                <th>A</th>
+                <th>Quantità</th>
+                <th>Unità</th>
+                <th>Condizione</th>
+                <th>Note</th>
+            </tr>
+            {% for m in movimenti %}
+            <tr data-data="{{ m.data_movimento.strftime('%Y-%m-%d') if m.data_movimento else '' }}"
+                data-materiale="{{ m.lotto.materiale.nome }}"
+                data-partenza="{{ m.posizione_partenza.nome if m.posizione_partenza else '' }}"
+                data-arrivo="{{ m.posizione_arrivo.nome }}"
+                data-condizione="{{ m.condizione.nome if m.condizione else '' }}"
+                data-note="{{ (m.note or '') | lower }}">
+                <td>{{ m.data_movimento }}</td>
+                <td>{{ m.lotto.materiale.nome }}</td>
+                <td>{{ m.posizione_partenza.nome if m.posizione_partenza else "—" }}</td>
+                <td>{{ m.posizione_arrivo.nome }}</td>
+                <td>{{ m.quantita_usata }}</td>
+                <td>{{ m.lotto.materiale.unita_misura.nome }}</td>
+                <td>{{ m.condizione.nome if m.condizione else "—" }}</td>
+                <td>{{ m.note or "" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p id="nessun-risultato-storico" style="display:none; color:var(--muted);">Nessun movimento corrisponde ai filtri.</p>
+        </div>
+    </main>
+    <script>
+        function popolaSelect(id, campo) {
+            const select = document.getElementById(id);
+            const valori = new Set();
+            document.querySelectorAll('tr[data-materiale]').forEach(function (riga) {
+                if (riga.dataset[campo]) valori.add(riga.dataset[campo]);
+            });
+            Array.from(valori).sort().forEach(function (valore) {
+                const opzione = document.createElement('option');
+                opzione.value = valore;
+                opzione.textContent = valore;
+                select.appendChild(opzione);
+            });
+        }
+        popolaSelect('f-materiale', 'materiale');
+        popolaSelect('f-partenza', 'partenza');
+        popolaSelect('f-arrivo', 'arrivo');
+        popolaSelect('f-condizione', 'condizione');
+
+        function filtraStorico() {
+            const dataDa = document.getElementById('f-data-da').value;
+            const dataA = document.getElementById('f-data-a').value;
+            const materiale = document.getElementById('f-materiale').value;
+            const partenza = document.getElementById('f-partenza').value;
+            const arrivo = document.getElementById('f-arrivo').value;
+            const condizione = document.getElementById('f-condizione').value;
+            const note = document.getElementById('f-note').value.toLowerCase().trim();
+
+            let visibili = 0;
+            document.querySelectorAll('tr[data-materiale]').forEach(function (riga) {
+                const ok =
+                    (!dataDa || riga.dataset.data >= dataDa) &&
+                    (!dataA || riga.dataset.data <= dataA) &&
+                    (!materiale || riga.dataset.materiale === materiale) &&
+                    (!partenza || riga.dataset.partenza === partenza) &&
+                    (!arrivo || riga.dataset.arrivo === arrivo) &&
+                    (!condizione || riga.dataset.condizione === condizione) &&
+                    (!note || riga.dataset.note.includes(note));
+                riga.style.display = ok ? '' : 'none';
+                if (ok) visibili++;
+            });
+            document.getElementById('nessun-risultato-storico').style.display = (visibili === 0) ? 'block' : 'none';
+        }
+
+        function azzeraFiltriStorico() {
+            document.querySelectorAll('.filtri-storico input, .filtri-storico select').forEach(function (campo) {
+                campo.value = '';
+            });
+            filtraStorico();
+        }
+    </script>
+</body>
+</html>

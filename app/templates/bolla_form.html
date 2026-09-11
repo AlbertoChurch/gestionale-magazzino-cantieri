@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inserimento materiale (bolla)</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% include "_nav.html" %}
+    <main>
+        <h1>Inserimento materiale (bolla)</h1>
+        <div class="card">
+        <form method="post" action="/bolle/nuovo">
+            <label>Fornitore
+                <select name="fornitore_id">
+                    {% for fornitore in fornitori %}
+                    <option value="{{ fornitore.id }}">{{ fornitore.nome }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Data <input type="date" name="data"></label>
+            <label>Numero ordine di riferimento <input type="text" name="numero_ordine_riferimento"></label>
+            <label>Numero bolla <input type="text" name="numero"></label>
+            <label>Firmato/accettato da <input type="text" name="firmatario"></label>
+            <label>Scaricato da (nomi) <input type="text" name="operatori_scarico"></label>
+            <button type="submit">Crea bolla e aggiungi materiali</button>
+        </form>
+        </div>
+    </main>
+</body>
+</html>

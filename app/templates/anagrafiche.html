@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Aggiungi dati</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% include "_nav.html" %}
+    <main>
+        <h1>Aggiungi dati</h1>
+        <p style="color:var(--muted);">Scegli la categoria dal menu laterale, sotto "Aggiungi dati".</p>
+
+        {% for gruppo in gruppi %}
+        <div class="card gruppo-anagrafica" id="gruppo-{{ gruppo.chiave }}" style="display:none;">
+            <h2>{{ gruppo.etichetta }}</h2>
+            <ul>
+                {% for elemento in gruppo.elementi %}
+                <li>{{ elemento.nome }}</li>
+                {% endfor %}
+            </ul>
+            <form method="post" action="/anagrafiche/{{ gruppo.chiave }}">
+                <label>Nuovo valore <input type="text" name="nome"></label>
+                <button type="submit">Aggiungi</button>
+            </form>
+        </div>
+        {% endfor %}
+    </main>
+    <script>
+        function mostraGruppoDaHash() {
+            const gruppi = document.querySelectorAll('.gruppo-anagrafica');
+            const daMostrare = document.getElementById(location.hash.slice(1)) || gruppi[0];
+            gruppi.forEach(function (elemento) {
+                elemento.style.display = (elemento === daMostrare) ? 'block' : 'none';
+            });
+        }
+        window.addEventListener('hashchange', mostraGruppoDaHash);
+        mostraGruppoDaHash();
+    </script>
+</body>
+</html>

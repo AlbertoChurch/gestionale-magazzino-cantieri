@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Posizioni</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% include "_nav.html" %}
+    <main>
+        <h1>Posizioni aperte</h1>
+        <div class="card">
+        <table>
+            <tr><th>Nome</th><th>Tipo</th><th>Indirizzo</th><th></th></tr>
+            {% for posizione in posizioni %}
+            <tr>
+                <td>{{ posizione.nome }}</td>
+                <td>{{ posizione.tipo_posizione.nome }}</td>
+                <td>{{ posizione.indirizzo or "—" }}</td>
+                <td>
+                    <form method="post" action="/posizioni/{{ posizione.id }}/chiudi" style="margin:0;">
+                        <button type="submit">Chiudi</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+
+        <div class="card">
+            <h2>Nuova posizione</h2>
+            <form method="post" action="/posizioni/nuovo">
+                <label>Nome <input type="text" name="nome"></label>
+                <label>Indirizzo <input type="text" name="indirizzo"></label>
+                <label>Tipo
+                    <select name="tipo_posizione_id">
+                        {% for tipo in tipi %}
+                        <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button type="submit">Crea</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

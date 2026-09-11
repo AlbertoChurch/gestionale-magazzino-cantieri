@@ -1,23 +1,50 @@
 <!DOCTYPE html>
 <html>
-<head><title>Magazzino</title></head>
+<head>
+    <title>Giacenze</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
 <body>
-    <h1>Magazzino</h1>
-    <table border="1">
-        <tr>
-            <th>Lotto</th>
-            <th>Quantità disponibile</th>
-            <th>Quantità iniziale</th>
-            <th>Stato</th>
-        </tr>
-        {% for lotto in lotti %}
-        <tr>
-            <td>{{ lotto.id }}</td>
-            <td>{{ lotto.quantita_disponibile }}</td>
-            <td>{{ lotto.quantita_iniziale }}</td>
-            <td>{{ lotto.stato_lotto.nome }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    {% include "_nav.html" %}
+    <main>
+        <h1>Giacenze</h1>
+        <div class="card">
+            <form method="get" action="/magazzino">
+                <label>Filtra per posizione
+                    <select name="posizione_id" onchange="this.form.submit()">
+                        <option value="">-- tutte le posizioni --</option>
+                        {% for posizione in posizioni %}
+                        <option value="{{ posizione.id }}" {% if posizione_selezionata and posizione_selezionata.id == posizione.id %}selected{% endif %}>{{ posizione.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </form>
+            <p>Stai vedendo: <strong>{{ posizione_selezionata.nome if posizione_selezionata else "tutte le posizioni" }}</strong></p>
+        </div>
+        <div class="card">
+        <table>
+            <tr>
+                <th>Prodotto/materiale</th>
+                <th>Fornitore</th>
+                <th>Quantità disponibile</th>
+                <th>Unità</th>
+                <th>Condizione</th>
+                <th>Note</th>
+                <th>Posizione attuale</th>
+            </tr>
+            {% for riga in righe %}
+            <tr>
+                <td><a href="/bolle/{{ riga.lotto.bolla_id }}/lotti/nuovo" title="Vai alla bolla di riferimento">{{ riga.lotto.materiale.nome }}</a></td>
+                <td><a href="/fornitori/{{ riga.lotto.materiale.fornitore.id }}">{{ riga.lotto.materiale.fornitore.nome }}</a></td>
+                <td class="{{ 'basso' if riga.sotto_soglia else '' }}">{{ riga.quantita }}</td>
+                <td>{{ riga.lotto.materiale.unita_misura.nome }}</td>
+                <td>{{ riga.condizione.nome if riga.condizione else "—" }}</td>
+                <td>{{ riga.note or "—" }}</td>
+                <td>{{ riga.posizione.nome if riga.posizione else "non ancora movimentato" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+    </main>
 </body>
 </html>

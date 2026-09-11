@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nuovo materiale</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% include "_nav.html" %}
+    <main>
+        <h1>Nuovo materiale</h1>
+        <div class="card">
+        <form method="post" action="/materiali/nuovo">
+            <label>Prodotto/materiale <input type="text" name="nome"></label>
+            <label>Fornitore
+                <select name="fornitore_id">
+                    {% for fornitore in fornitori %}
+                    <option value="{{ fornitore.id }}">{{ fornitore.nome }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Unità di misura
+                <select name="unita_misura_id">
+                    {% for u in unita %}
+                    <option value="{{ u.id }}">{{ u.nome }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit">Crea</button>
+        </form>
+        </div>
+    </main>
+</body>
+</html>

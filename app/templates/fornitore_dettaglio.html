@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ fornitore.nome }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% include "_nav.html" %}
+    <main>
+        <h1>{{ fornitore.nome }}</h1>
+        <div class="card">
+            <h2>Contatti</h2>
+            <p><strong>Referente 1:</strong> {{ fornitore.referente_1 or "—" }}</p>
+            <p><strong>Referente 2:</strong> {{ fornitore.referente_2 or "—" }}</p>
+            <p><strong>Email generale:</strong> {{ fornitore.email_generale or "—" }}</p>
+            <p><strong>Email commerciale:</strong> {{ fornitore.email_commerciale or "—" }}</p>
+            <p><strong>Email tecnico:</strong> {{ fornitore.email_tecnico or "—" }}</p>
+            <p><strong>Email amministrazione:</strong> {{ fornitore.email_amministrazione or "—" }}</p>
+            <p><strong>Telefono fisso:</strong> {{ fornitore.telefono_fisso or "—" }}</p>
+            <p><strong>Cellulare 1:</strong> {{ fornitore.cellulare_1 or "—" }}</p>
+            <p><strong>Cellulare 2:</strong> {{ fornitore.cellulare_2 or "—" }}</p>
+        </div>
+        <div class="card">
+            <h2>Materiali forniti</h2>
+            <table>
+                <tr><th>Prodotto/materiale</th></tr>
+                {% for materiale in materiali %}
+                <tr><td>{{ materiale.nome }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </main>
+</body>
+</html>
