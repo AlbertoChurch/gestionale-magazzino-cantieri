@@ -340,3 +340,38 @@ a { color: var(--primary-dark); transition: color 0.15s ease; }
     nav .spacer { display: none; }
     main { margin: 0; max-width: 100%; }
 }
+
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background: var(--primary);
+    color: #ffffff;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    animation: toast-entra 0.2s ease;
+}
+
+.toast-errore { background: var(--danger); }
+
+.toast-esci { animation: toast-esce 0.25s ease forwards; }
+
+@keyframes toast-entra {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-esce {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(20px); }
+}

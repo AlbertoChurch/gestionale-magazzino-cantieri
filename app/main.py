@@ -1,8 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, Form
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 
 from app import models, schemas
 from app.database import get_db
@@ -11,10 +13,32 @@ import hashlib, secrets, json
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
+from urllib.parse import quote
 
 app = FastAPI(title="Gestionale Magazzion/cantiere")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+
+
+@app.exception_handler(IntegrityError)
+async def gestisci_integrity_error(request: Request, exc: IntegrityError):
+    return JSONResponse(status_code=409, content={"detail": "Valore duplicato o dato non valido: controlla di non aver già inserito lo stesso valore."})
+
+
+def redirect_con_messaggio(url: str, messaggio: str, tipo: str = "ok") -> RedirectResponse:
+    """Redirect che porta con sé un messaggio da mostrare come popup nella pagina di arrivo.
+    La query va inserita prima dell'eventuale #ancora, non dopo (altrimenti finisce dentro
+    il fragment e il browser non la considera più query string)."""
+    base, _, ancora = url.partition("#")
+    separatore = "&" if "?" in base else "?"
+    query = f"{separatore}flash={quote(messaggio)}&flash_tipo={tipo}"
+    return RedirectResponse(url=f"{base}{query}{'#' + ancora if ancora else ''}", status_code=303)
+
+
+def valore_gia_esistente(db: Session, modello, nome: str) -> bool:
+    """Controllo duplicati (spazi/maiuscole ignorati) prima di inserire, per dare un
+    errore chiaro invece di far esplodere il vincolo unique sul nome in database."""
+    return db.query(modello).filter(func.lower(func.trim(modello.nome)) == nome.strip().lower()).first() is not None
 
 @app.get("/")
 async def root():
@@ -282,7 +306,7 @@ def crea_movimento_da_form(
         contesto = contesto_form_movimento(db, utente)
         contesto["errore"] = errore.detail
         return templates.TemplateResponse(request, "movimento_form.html", contesto, status_code=errore.status_code)
-    return RedirectResponse(url="/magazzino", status_code=303)
+    return redirect_con_messaggio("/movimenti/nuovo", "Movimento registrato")
 
 
 RigaGiacenza = tuple[int, Optional[int], Optional[str]]  # (posizione_id, condizione_id, note)
@@ -470,17 +494,21 @@ TABELLE_ANAGRAFICHE_SEMPLICI = {
 }
 
 
-@app.get("/anagrafiche")
-def pagina_anagrafiche(request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
-    gruppi = [
+def costruisci_gruppi_anagrafiche(db: Session) -> list[dict]:
+    return [
         {"chiave": chiave, "etichetta": etichetta, "elementi": db.query(Modello).all()}
         for chiave, (etichetta, Modello) in TABELLE_ANAGRAFICHE_SEMPLICI.items()
     ]
-    return templates.TemplateResponse(request, "anagrafiche.html", {"gruppi": gruppi, "utente": utente})
+
+
+@app.get("/anagrafiche")
+def pagina_anagrafiche(request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    return templates.TemplateResponse(request, "anagrafiche.html", {"gruppi": costruisci_gruppi_anagrafiche(db), "utente": utente, "errore": None, "gruppo_attivo": None})
 
 
 @app.post("/anagrafiche/{tipo}")
 def crea_anagrafica_semplice(
+    request: Request,
     tipo: str,
     nome: str = Form(...),
     db: Session = Depends(get_db),
@@ -489,10 +517,21 @@ def crea_anagrafica_semplice(
     voce = TABELLE_ANAGRAFICHE_SEMPLICI.get(tipo)
     if voce is None:
         raise HTTPException(status_code=404, detail="Tipo anagrafica sconosciuto")
-    _, Modello = voce
+    etichetta, Modello = voce
+    nome = nome.strip()
+    if valore_gia_esistente(db, Modello, nome):
+        return templates.TemplateResponse(
+            request, "anagrafiche.html",
+            {
+                "gruppi": costruisci_gruppi_anagrafiche(db), "utente": utente,
+                "errore": f'"{nome}" esiste già in {etichetta.lower()}',
+                "gruppo_attivo": tipo,
+            },
+            status_code=400,
+        )
     db.add(Modello(nome=nome))
     db.commit()
-    return RedirectResponse(url="/anagrafiche", status_code=303)
+    return redirect_con_messaggio(f"/anagrafiche#gruppo-{tipo}", f'"{nome}" aggiunto a {etichetta.lower()}')
 
 
 
@@ -530,7 +569,7 @@ def crea_fornitore_da_form(
     )
     db.add(nuovo)
     db.commit()
-    return RedirectResponse(url="/magazzino", status_code=303)
+    return redirect_con_messaggio("/fornitori/nuovo", "Fornitore aggiunto")
 
 
 @app.get("/fornitori/{fornitore_id}")
@@ -551,10 +590,10 @@ def crea_posizione_da_form(
     db: Session = Depends(get_db),
     utente: models.Utente = Depends(get_utente_da_sessione),
 ):
-    nuovo = models.Posizione(nome=nome, indirizzo=indirizzo or None, tipo_posizione_id=tipo_posizione_id)
+    nuovo = models.Posizione(nome=nome.strip(), indirizzo=indirizzo.strip() or None, tipo_posizione_id=tipo_posizione_id)
     db.add(nuovo)
     db.commit()
-    return RedirectResponse(url="/posizioni-elenco", status_code=303)
+    return redirect_con_messaggio("/posizioni-elenco", "Posizione aggiunta")
 
 
 @app.get("/posizioni-elenco")
@@ -571,7 +610,7 @@ def chiudi_posizione(posizione_id: int, db: Session = Depends(get_db), utente: m
         raise HTTPException(status_code=404, detail="Posizione non trovata")
     posizione.data_chiusura = datetime.now()
     db.commit()
-    return RedirectResponse(url="/posizioni-elenco", status_code=303)
+    return redirect_con_messaggio("/posizioni-elenco", "Posizione chiusa")
 
 
 @app.post("/posizioni/{posizione_id}/riapri")
@@ -581,7 +620,7 @@ def riapri_posizione(posizione_id: int, db: Session = Depends(get_db), utente: m
         raise HTTPException(status_code=404, detail="Posizione non trovata")
     posizione.data_chiusura = None
     db.commit()
-    return RedirectResponse(url="/archivio/posizioni", status_code=303)
+    return redirect_con_messaggio("/archivio/posizioni", "Posizione riaperta")
 
 
 
@@ -603,7 +642,7 @@ def crea_materiale_da_form(
     nuovo = models.Materiale(nome=nome, fornitore_id=fornitore_id, unita_misura_id=unita_misura_id)
     db.add(nuovo)
     db.commit()
-    return RedirectResponse(url="/magazzino", status_code=303)
+    return redirect_con_messaggio("/materiali/nuovo", "Materiale aggiunto")
 
 
 
@@ -635,7 +674,7 @@ def crea_bolla_da_form(
     db.add(nuova_bolla)
     db.commit()
     db.refresh(nuova_bolla)
-    return RedirectResponse(url=f"/bolle/{nuova_bolla.id}/lotti/nuovo", status_code=303)
+    return redirect_con_messaggio(f"/bolle/{nuova_bolla.id}/lotti/nuovo", "Bolla creata, ora aggiungi i materiali")
 
 
 
@@ -649,7 +688,7 @@ def form_lotto(bolla_id: int, request: Request, db: Session = Depends(get_db), u
     magazzini = (
         db.query(models.Posizione)
         .join(models.TipoPosizione)
-        .filter(models.TipoPosizione.nome == "magazzino", models.Posizione.data_chiusura.is_(None))
+        .filter(func.lower(func.trim(models.TipoPosizione.nome)) == "magazzino", models.Posizione.data_chiusura.is_(None))
         .all()
     )
     lotti_aggiunti = db.query(models.Lotto).filter(models.Lotto.bolla_id == bolla_id).all()
@@ -695,7 +734,7 @@ def crea_lotto_da_form(
     )
     db.add(primo_movimento)
     db.commit()
-    return RedirectResponse(url=f"/bolle/{bolla_id}/lotti/nuovo", status_code=303)
+    return redirect_con_messaggio(f"/bolle/{bolla_id}/lotti/nuovo", "Materiale aggiunto alla bolla")
 
 
 def condizione_iniziale_lotto(lotto_id: int, db: Session) -> models.CondizioneMateriale | None:
@@ -758,7 +797,7 @@ def crea_utente_da_form(
     )
     db.add(nuovo)
     db.commit()
-    return RedirectResponse(url="/utenti/nuovo", status_code=303)
+    return redirect_con_messaggio("/utenti/nuovo", "Utente creato")
 
 
 
@@ -783,4 +822,4 @@ def cambia_password(
         )
     utente.password_hash = genera_password_hash(password_nuova)
     db.commit()
-    return RedirectResponse(url="/magazzino", status_code=303)
+    return redirect_con_messaggio("/cambia-password", "Password aggiornata")
