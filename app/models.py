@@ -31,6 +31,7 @@ class Fornitore(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     nome: Mapped[str] = mapped_column(String(100), index=True)
+    descrizione: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     email_generale: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     email_commerciale: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     email_tecnico: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)

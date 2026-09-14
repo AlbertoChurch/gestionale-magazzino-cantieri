@@ -7,7 +7,7 @@
 <body>
     {% include "_nav.html" %}
     <main>
-        <h1>{{ fornitore.nome }}</h1>
+        <h1>{{ fornitore.nome }}{% if fornitore.descrizione %} <small>— {{ fornitore.descrizione }}</small>{% endif %}</h1>
         <div class="card">
             <h2>Contatti</h2>
             <p><strong>Referente 1:</strong> {{ fornitore.referente_1 or "—" }}</p>

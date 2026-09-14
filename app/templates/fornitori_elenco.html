@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fornitori e prodotti</title>
+    <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
+</head>
+<body>
+    {% include "_nav.html" %}
+    <main>
+        <h1>Fornitori e prodotti</h1>
+
+        <div class="card filtri-storico">
+            <label>Fornitore
+                <select id="f-fornitore" onchange="filtraFornitori()"><option value="">-- tutti --</option></select>
+            </label>
+            <label>Prodotto
+                <select id="f-prodotto" onchange="filtraFornitori()"><option value="">-- tutti --</option></select>
+            </label>
+            <label>Cerca
+                <input type="text" id="f-cerca" oninput="filtraFornitori()" placeholder="cerca fornitore, cosa vende o prodotto...">
+            </label>
+            <button type="button" onclick="azzeraFiltriFornitori()">Azzera filtri</button>
+        </div>
+
+        <div class="card">
+        <table>
+            <tr>
+                <th>Fornitore</th>
+                <th>Cosa vende</th>
+                <th>Prodotto</th>
+                <th>Unità</th>
+            </tr>
+            {% for fornitore in fornitori %}
+                {% if fornitore.materiali %}
+                    {% for materiale in fornitore.materiali %}
+                    <tr data-fornitore="{{ fornitore.nome }}" data-prodotto="{{ materiale.nome }}"
+                        data-cerca="{{ (fornitore.nome ~ ' ' ~ (fornitore.descrizione or '') ~ ' ' ~ materiale.nome) | lower }}">
+                        <td><a href="/fornitori/{{ fornitore.id }}">{{ fornitore.nome }}</a></td>
+                        <td>{{ fornitore.descrizione or "—" }}</td>
+                        <td>{{ materiale.nome }}</td>
+                        <td>{{ materiale.unita_misura.nome }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr data-fornitore="{{ fornitore.nome }}" data-prodotto=""
+                    data-cerca="{{ (fornitore.nome ~ ' ' ~ (fornitore.descrizione or '')) | lower }}">
+                    <td><a href="/fornitori/{{ fornitore.id }}">{{ fornitore.nome }}</a></td>
+                    <td>{{ fornitore.descrizione or "—" }}</td>
+                    <td>—</td>
+                    <td>—</td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+        <p id="nessun-risultato-fornitori" style="display:none; color:var(--muted);">Nessun fornitore/prodotto corrisponde ai filtri.</p>
+        </div>
+    </main>
+    <script>
+        function popolaSelect(id, campo) {
+            const select = document.getElementById(id);
+            const valori = new Set();
+            document.querySelectorAll('tr[data-fornitore]').forEach(function (riga) {
+                if (riga.dataset[campo]) valori.add(riga.dataset[campo]);
+            });
+            Array.from(valori).sort().forEach(function (valore) {
+                const opzione = document.createElement('option');
+                opzione.value = valore;
+                opzione.textContent = valore;
+                select.appendChild(opzione);
+            });
+        }
+        popolaSelect('f-fornitore', 'fornitore');
+        popolaSelect('f-prodotto', 'prodotto');
+
+        function filtraFornitori() {
+            const fornitore = document.getElementById('f-fornitore').value;
+            const prodotto = document.getElementById('f-prodotto').value;
+            const cerca = document.getElementById('f-cerca').value.toLowerCase().trim();
+
+            let visibili = 0;
+            document.querySelectorAll('tr[data-fornitore]').forEach(function (riga) {
+                const ok =
+                    (!fornitore || riga.dataset.fornitore === fornitore) &&
+                    (!prodotto || riga.dataset.prodotto === prodotto) &&
+                    (!cerca || riga.dataset.cerca.includes(cerca));
+                riga.style.display = ok ? '' : 'none';
+                if (ok) visibili++;
+            });
+            document.getElementById('nessun-risultato-fornitori').style.display = (visibili === 0) ? 'block' : 'none';
+        }
+
+        function azzeraFiltriFornitori() {
+            document.querySelectorAll('.filtri-storico input, .filtri-storico select').forEach(function (campo) {
+                campo.value = '';
+            });
+            filtraFornitori();
+        }
+    </script>
+</body>
+</html>

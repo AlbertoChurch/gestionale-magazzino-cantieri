@@ -5,6 +5,7 @@ from datetime import datetime
 
 class FornitoreCreate(BaseModel):
     nome: str
+    descrizione: Optional[str] = None
     email_generale: Optional[str] = None
     email_commerciale: Optional[str] = None
     email_tecnico: Optional[str] = None

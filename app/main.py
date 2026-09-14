@@ -724,6 +724,7 @@ def elimina_anagrafica_semplice(
 
 def _campi_fornitore_form(
     nome: str = Form(...),
+    descrizione: str = Form(""),
     email_generale: str = Form(""),
     email_commerciale: str = Form(""),
     email_tecnico: str = Form(""),
@@ -736,6 +737,7 @@ def _campi_fornitore_form(
 ) -> dict:
     return dict(
         nome=nome.strip(),
+        descrizione=descrizione.strip() or None,
         email_generale=email_generale or None,
         email_commerciale=email_commerciale or None,
         email_tecnico=email_tecnico or None,
@@ -830,6 +832,11 @@ def pagina_fornitore(fornitore_id: int, request: Request, db: Session = Depends(
     materiali = db.query(models.Materiale).filter(models.Materiale.fornitore_id == fornitore_id).all()
     return templates.TemplateResponse(request, "fornitore_dettaglio.html", {"fornitore": fornitore, "materiali": materiali, "utente": utente})
 
+
+@app.get("/fornitori-elenco")
+def pagina_fornitori_elenco(request: Request, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
+    fornitori = db.query(models.Fornitore).order_by(models.Fornitore.nome).all()
+    return templates.TemplateResponse(request, "fornitori_elenco.html", {"fornitori": fornitori, "utente": utente})
 
 
 @app.post("/posizioni/nuovo")
