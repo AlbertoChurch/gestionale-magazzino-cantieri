@@ -504,10 +504,6 @@ def form_movimento(request: Request, db: Session = Depends(get_db), utente: mode
     return templates.TemplateResponse(request, "movimento_form.html", contesto_form_movimento(db, utente))
 
 
-@app.get("/prova")
-def pagina_prova(request: Request):
-    return templates.TemplateResponse(request, "prova.html", {"messaggio": "Funziona!"})
-
 @app.get("/magazzino")
 def pagina_magazzino(request: Request, posizione_id: str = "", db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
     tutte_posizioni = {p.id: p for p in db.query(models.Posizione).all()}
