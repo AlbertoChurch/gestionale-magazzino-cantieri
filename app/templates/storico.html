@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Storico movimenti</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -17,31 +19,39 @@
                 <input type="date" id="f-data-a" onchange="filtraStorico()">
             </label>
             <label>Materiale
-                <select id="f-materiale" onchange="filtraStorico()"><option value="">-- tutti --</option></select>
+                <select id="f-materiale" onchange="filtraStorico()"><option value="">Tutti</option></select>
             </label>
             <label>Da (posizione)
-                <select id="f-partenza" onchange="filtraStorico()"><option value="">-- tutte --</option></select>
+                <select id="f-partenza" onchange="filtraStorico()"><option value="">Tutte</option></select>
             </label>
             <label>A (posizione)
-                <select id="f-arrivo" onchange="filtraStorico()"><option value="">-- tutte --</option></select>
+                <select id="f-arrivo" onchange="filtraStorico()"><option value="">Tutte</option></select>
             </label>
             <label>Condizione
-                <select id="f-condizione" onchange="filtraStorico()"><option value="">-- tutte --</option></select>
+                <select id="f-condizione" onchange="filtraStorico()"><option value="">Tutte</option></select>
             </label>
             <label>Note contengono
                 <input type="text" id="f-note" oninput="filtraStorico()" placeholder="cerca nelle note...">
             </label>
-            <button type="button" onclick="azzeraFiltriStorico()">Azzera filtri</button>
+            <button type="button" class="btn-secondario grande" onclick="azzeraFiltriStorico()">Azzera filtri</button>
         </div>
 
+        {% if not movimenti %}
         <div class="card">
-        <table>
+            <p class="vuoto"><strong>Ancora nessun movimento registrato</strong>Gli spostamenti compaiono qui appena ne registri uno da <a href="/movimenti/nuovo">Nuovo movimento</a>.</p>
+        </div>
+        {% else %}
+        <div class="riga-conteggio">
+            <span><strong id="conteggio">{{ movimenti | length }}</strong> {{ "movimento" if movimenti | length == 1 else "movimenti" }}</span>
+        </div>
+        <div class="card card-tabella">
+        <table class="tabella-densa">
             <tr>
                 <th>Data</th>
                 <th>Materiale</th>
                 <th>Da</th>
                 <th>A</th>
-                <th>Quantità</th>
+                <th class="num">Quantità</th>
                 <th>Unità</th>
                 <th>Condizione</th>
                 <th>Note</th>
@@ -54,17 +64,17 @@
                 data-arrivo="{{ m.posizione_arrivo.nome }}"
                 data-condizione="{{ m.condizione.nome if m.condizione else '' }}"
                 data-note="{{ (m.note or '') | lower }}">
-                <td>{{ m.data_movimento }}</td>
+                <td class="nowrap">{{ m.data_movimento.strftime('%d/%m/%Y %H:%M') if m.data_movimento else "—" }}</td>
                 <td>{{ m.lotto.materiale.nome }}</td>
                 <td>{{ m.posizione_partenza.nome if m.posizione_partenza else "—" }}</td>
                 <td>{{ m.posizione_arrivo.nome }}</td>
-                <td>{{ m.quantita_usata }}</td>
+                <td class="num">{{ m.quantita_usata }}</td>
                 <td>{{ m.lotto.materiale.unita_misura.nome }}</td>
                 <td>{{ m.condizione.nome if m.condizione else "—" }}</td>
                 <td>{{ m.note or "" }}</td>
                 <td>
                     <div class="azioni-riga">
-                        <a href="/movimenti/{{ m.id }}/modifica"><button type="button" class="btn-secondario">Modifica</button></a>
+                        <a href="/movimenti/{{ m.id }}/modifica" class="btn-secondario">Modifica</a>
                         <form method="post" action="/movimenti/{{ m.id }}/elimina">
                             <button type="button" class="btn-secondario" onclick="chiediConferma(this)">Elimina</button>
                         </form>
@@ -73,8 +83,9 @@
             </tr>
             {% endfor %}
         </table>
-        <p id="nessun-risultato-storico" style="display:none; color:var(--muted);">Nessun movimento corrisponde ai filtri.</p>
+        <p id="nessun-risultato-storico" class="vuoto" style="display:none;"><strong>Nessun movimento corrisponde ai filtri</strong>Allarga le date o premi "Azzera filtri".</p>
         </div>
+        {% endif %}
     </main>
     <script>
         function popolaSelect(id, campo) {
@@ -117,7 +128,10 @@
                 riga.style.display = ok ? '' : 'none';
                 if (ok) visibili++;
             });
-            document.getElementById('nessun-risultato-storico').style.display = (visibili === 0) ? 'block' : 'none';
+            const conteggio = document.getElementById('conteggio');
+            if (conteggio) conteggio.textContent = visibili;
+            const messaggio = document.getElementById('nessun-risultato-storico');
+            if (messaggio) messaggio.style.display = (visibili === 0) ? 'block' : 'none';
         }
 
         function azzeraFiltriStorico() {

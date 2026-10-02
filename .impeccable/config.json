@@ -1,0 +1,53 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "app/templates/login.html"
+        ],
+        "createdAt": "2026-10-02T17:02:01.999Z",
+        "reason": "domain-literal: mowing stripes of synthetic turf on the login backdrop (client asked that colors recall artificial grass); decided by the assistant, not explicitly confirmed by the user"
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "app/templates/*.html"
+        ],
+        "createdAt": "2026-10-02T17:02:39.515Z",
+        "reason": "domain-literal: mowing stripes of synthetic turf on the login backdrop (style.css is shared by every page); assistant decision, not explicitly confirmed by the user"
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "app/static/style.css"
+        ],
+        "createdAt": "2026-10-02T17:02:39.966Z",
+        "reason": "domain-literal: mowing stripes of synthetic turf on the login backdrop (style.css is shared by every page); assistant decision, not explicitly confirmed by the user"
+      },
+      {
+        "rule": "em-dash-overuse",
+        "value": "*",
+        "files": [
+          "app/templates/fornitore_dettaglio.html"
+        ],
+        "createdAt": "2026-10-02T17:23:47.172Z",
+        "reason": "false positive: the em dash is the app-wide empty-value marker for missing contact fields (existing convention), not prose; assistant decision"
+      },
+      {
+        "rule": "gpt-thin-border-wide-shadow",
+        "value": "*",
+        "files": [
+          "app/templates/login.html"
+        ],
+        "createdAt": "2026-10-02T17:23:47.588Z",
+        "reason": "false positive: .login-card sets border:0 so only the shadow is rendered (verified in screenshot); the detector does not resolve the cascade override; assistant decision"
+      }
+    ]
+  }
+}

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Materiali della bolla {{ bolla.numero }}</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -8,14 +10,17 @@
     {% include "_nav.html" %}
     <main>
         <h1>Bolla {{ bolla.numero }}</h1>
-        <p>Ordine di riferimento: {{ bolla.numero_ordine_riferimento or "—" }}</p>
+        <p class="dati-riga sottotitolo">
+            <span>Fornitore: <strong>{{ bolla.fornitore.nome }}</strong></span>
+            <span>Ordine di riferimento: <strong>{{ bolla.numero_ordine_riferimento or "—" }}</strong></span>
+        </p>
 
         {% if lotti_aggiunti %}
         <div class="card">
-            <h2>Materiali già aggiunti</h2>
+            <h2>Materiali già aggiunti ({{ lotti_aggiunti | length }})</h2>
             <ul class="ricevuta">
                 {% for lotto in lotti_aggiunti %}
-                <li>{{ lotto.materiale.nome }} — {{ lotto.quantita_iniziale }} — {{ lotto.condizione_iniziale.nome if lotto.condizione_iniziale else "—" }}</li>
+                <li><strong>{{ lotto.materiale.nome }}</strong> — {{ lotto.quantita_iniziale }} {{ lotto.materiale.unita_misura.nome }} — {{ lotto.condizione_iniziale.nome if lotto.condizione_iniziale else "—" }}</li>
                 {% endfor %}
             </ul>
         </div>
@@ -23,38 +28,49 @@
 
         <div class="card">
             <h2>Aggiungi materiale</h2>
+            {% if not materiali %}
+            <p class="vuoto"><strong>{{ bolla.fornitore.nome }} non ha ancora materiali</strong>Aggiungili da <a href="/materiali/nuovo">Aggiungi dati → Materiale</a>, poi torna a questa bolla.</p>
+            {% else %}
             <form method="post" action="/bolle/{{ bolla.id }}/lotti/nuovo">
-                <label>Materiale
-                    <select name="materiale_id">
-                        {% for materiale in materiali %}
-                        <option value="{{ materiale.id }}">{{ materiale.nome }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label>Quantità <input type="number" step="0.01" name="quantita_iniziale"></label>
-                <label>Condizione
-                    <select name="condizione_id">
-                        {% for condizione in condizioni %}
-                        <option value="{{ condizione.id }}">{{ condizione.nome }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label>In quale magazzino arriva
-                    {% if magazzini %}
-                    <select name="posizione_iniziale_id">
-                        {% for magazzino in magazzini %}
-                        <option value="{{ magazzino.id }}">{{ magazzino.nome }}</option>
-                        {% endfor %}
-                    </select>
-                    {% else %}
-                    <span class="errore">Nessun magazzino disponibile — creane uno prima da "Aggiungi dati" → Posizione.</span>
-                    {% endif %}
-                </label>
-                <button type="submit" {% if not magazzini %}disabled{% endif %}>Aggiungi</button>
+                <div class="form-griglia">
+                    <label>Materiale
+                        <select name="materiale_id" required {% if not lotti_aggiunti %}autofocus{% endif %}>
+                            <option value="">Seleziona un materiale</option>
+                            {% for materiale in materiali %}
+                            <option value="{{ materiale.id }}">{{ materiale.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>Quantità <input type="number" step="0.01" min="0.01" inputmode="decimal" name="quantita_iniziale" required></label>
+                    <label>Condizione
+                        <select name="condizione_id" required>
+                            <option value="">Seleziona la condizione</option>
+                            {% for condizione in condizioni %}
+                            <option value="{{ condizione.id }}">{{ condizione.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>In quale magazzino arriva
+                        {% if magazzini %}
+                        <select name="posizione_iniziale_id" required>
+                            {% for magazzino in magazzini %}
+                            <option value="{{ magazzino.id }}">{{ magazzino.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <span class="errore in-linea">Nessun magazzino disponibile — creane uno da <a href="/posizioni-elenco">Aggiungi dati → Posizione</a>.</span>
+                        {% endif %}
+                    </label>
+                </div>
+                <button type="submit" {% if not magazzini %}disabled{% endif %}>Aggiungi alla bolla</button>
             </form>
+            {% endif %}
         </div>
 
-        <a href="/magazzino"><button type="button">Fine, vai alle giacenze</button></a>
+        <div class="barra-azioni">
+            <a href="/magazzino" class="btn-secondario grande">Ho finito, vai alle giacenze</a>
+            {% if lotti_aggiunti %}<span class="meta">Puoi sempre tornare a questa bolla dalle Giacenze.</span>{% endif %}
+        </div>
     </main>
 </body>
 </html>

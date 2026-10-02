@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Aggiungi dati</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -8,15 +10,15 @@
     {% include "_nav.html" %}
     <main>
         <h1>Aggiungi dati</h1>
-        <p style="color:var(--muted);">Scegli la categoria dal menu laterale, sotto "Aggiungi dati".</p>
+        <p class="meta sottotitolo">Scegli la categoria dal menu laterale, sotto "Aggiungi dati".</p>
 
         {% for gruppo in gruppi %}
         <div class="card gruppo-anagrafica" id="gruppo-{{ gruppo.chiave }}" style="display:none;">
             <h2>{{ gruppo.etichetta }}</h2>
             {% if errore and gruppo_attivo == gruppo.chiave %}
-            <p class="errore">{{ errore }}</p>
+            <p class="errore" role="alert">{{ errore }}</p>
             {% endif %}
-            <form method="post" action="/anagrafiche/{{ gruppo.chiave }}">
+            <form method="post" action="/anagrafiche/{{ gruppo.chiave }}" autocomplete="off">
                 <label>Nuovo valore <input type="text" name="nome" required></label>
                 <button type="submit">Aggiungi</button>
             </form>
@@ -31,11 +33,13 @@
                         </form>
                     </div>
                     <form method="post" action="/anagrafiche/{{ gruppo.chiave }}/{{ elemento.id }}/modifica" class="form-modifica-inline" style="display:none;">
-                        <input type="text" name="nome" value="{{ elemento.nome }}" required>
+                        <input type="text" name="nome" value="{{ elemento.nome }}" required aria-label="Nome">
                         <button type="submit">Salva</button>
                         <button type="button" class="btn-secondario" onclick="nascondiModificaInline(this)">Annulla</button>
                     </form>
                 </li>
+                {% else %}
+                <li class="meta">Ancora nessun valore: aggiungine uno con il campo qui sopra.</li>
                 {% endfor %}
             </ul>
         </div>

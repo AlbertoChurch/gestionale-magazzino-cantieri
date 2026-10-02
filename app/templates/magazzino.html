@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Giacenze</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -8,35 +10,43 @@
     {% include "_nav.html" %}
     <main>
         <h1>Giacenze</h1>
-        <div class="card">
-            <form method="get" action="/magazzino">
-                <label>Filtra per posizione
+
+        <div class="card filtri-storico">
+            <form method="get" action="/magazzino" class="contenuti">
+                <label>Posizione
                     <select name="posizione_id" onchange="this.form.submit()">
-                        <option value="">-- tutte le posizioni --</option>
+                        <option value="">Tutte le posizioni</option>
                         {% for posizione in posizioni %}
                         <option value="{{ posizione.id }}" {% if posizione_selezionata and posizione_selezionata.id == posizione.id %}selected{% endif %}>{{ posizione.nome }}</option>
                         {% endfor %}
                     </select>
                 </label>
             </form>
-            <p>Stai vedendo: <strong>{{ posizione_selezionata.nome if posizione_selezionata else "tutte le posizioni" }}</strong></p>
+            <label>Cerca
+                <input type="search" id="f-cerca" oninput="filtraGiacenze()" placeholder="prodotto, fornitore, condizione, note..." {% if not righe %}disabled{% endif %}>
+            </label>
         </div>
-        <div class="card">
+
+        {% if righe %}
+        <div class="riga-conteggio">
+            <span>Stai vedendo <strong id="conteggio">{{ righe | length }}</strong> {{ "giacenza" if righe | length == 1 else "giacenze" }} in <strong>{{ posizione_selezionata.nome if posizione_selezionata else "tutte le posizioni" }}</strong></span>
+        </div>
+        <div class="card card-tabella">
         <table>
             <tr>
                 <th>Prodotto/materiale</th>
                 <th>Fornitore</th>
-                <th>Quantità disponibile</th>
+                <th class="num">Quantità disponibile</th>
                 <th>Unità</th>
                 <th>Condizione</th>
                 <th>Note</th>
                 <th>Posizione attuale</th>
             </tr>
             {% for riga in righe %}
-            <tr>
+            <tr data-cerca="{{ (riga.lotto.materiale.nome ~ ' ' ~ riga.lotto.materiale.fornitore.nome ~ ' ' ~ (riga.condizione.nome if riga.condizione else '') ~ ' ' ~ (riga.note or '') ~ ' ' ~ (riga.posizione.nome if riga.posizione else '')) | lower }}">
                 <td><a href="/bolle/{{ riga.lotto.bolla_id }}/lotti/nuovo" title="Vai alla bolla di riferimento">{{ riga.lotto.materiale.nome }}</a></td>
                 <td><a href="/fornitori/{{ riga.lotto.materiale.fornitore.id }}">{{ riga.lotto.materiale.fornitore.nome }}</a></td>
-                <td class="{{ 'basso' if riga.sotto_soglia else '' }}">{{ riga.quantita }}</td>
+                <td class="num {{ 'basso' if riga.sotto_soglia else '' }}">{{ riga.quantita }}</td>
                 <td>{{ riga.lotto.materiale.unita_misura.nome }}</td>
                 <td>{{ riga.condizione.nome if riga.condizione else "—" }}</td>
                 <td>{{ riga.note or "—" }}</td>
@@ -44,7 +54,30 @@
             </tr>
             {% endfor %}
         </table>
+        <p id="nessun-risultato" class="vuoto" style="display:none;"><strong>Nessuna giacenza corrisponde alla ricerca</strong>Prova con meno parole o <a href="#" onclick="document.getElementById('f-cerca').value=''; filtraGiacenze(); return false;">cancella la ricerca</a>.</p>
         </div>
+        {% else %}
+        <div class="card">
+            <p class="vuoto">
+                <strong>{{ "Nessun materiale in questa posizione" if posizione_selezionata else "Nessun materiale in giacenza" }}</strong>
+                {% if posizione_selezionata %}Scegli un'altra posizione, oppure <a href="/movimenti/nuovo">registra uno spostamento</a> verso {{ posizione_selezionata.nome }}.{% else %}Il materiale compare qui dopo aver registrato una bolla da <a href="/bolle/nuovo">Inserimento materiale</a>.{% endif %}
+            </p>
+        </div>
+        {% endif %}
     </main>
+    <script>
+        function filtraGiacenze() {
+            const q = document.getElementById('f-cerca').value.toLowerCase().trim();
+            let visibili = 0;
+            document.querySelectorAll('tr[data-cerca]').forEach(function (riga) {
+                const ok = !q || riga.dataset.cerca.includes(q);
+                riga.style.display = ok ? '' : 'none';
+                if (ok) visibili++;
+            });
+            const conteggio = document.getElementById('conteggio');
+            if (conteggio) conteggio.textContent = visibili;
+            document.getElementById('nessun-risultato').style.display = (visibili === 0) ? 'block' : 'none';
+        }
+    </script>
 </body>
 </html>
