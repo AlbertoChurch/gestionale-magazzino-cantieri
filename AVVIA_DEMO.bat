@@ -12,7 +12,7 @@ if not exist ".venv\Scripts\python.exe" (echo Preparo l'ambiente Python, solo la
 if errorlevel 1 (echo Non sono riuscito a creare l'ambiente Python. & pause & exit /b 1)
 
 rem Se i componenti ci sono gia' non scarica nulla (e non serve internet).
-".venv\Scripts\python.exe" -m pip install -q -r requirements.txt
+".venv\Scripts\python.exe" -m pip install -q --disable-pip-version-check -r requirements.txt
 if errorlevel 1 (echo Installazione dei componenti non riuscita: serve internet, e Python 3.14. & pause & exit /b 1)
 
 rem Dati di esempio solo se il database non esiste o e' vuoto: non tocca mai dati gia' presenti.
