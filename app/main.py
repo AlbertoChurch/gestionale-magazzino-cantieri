@@ -7,13 +7,15 @@ from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 
 from app import models, schemas
-from app.database import get_db
+from app.database import get_db, avvisa_tabelle_obsolete
 
 import hashlib, secrets, os
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 from urllib.parse import quote
+
+avvisa_tabelle_obsolete()  # dopo l'import dei models: confronta con Base.metadata
 
 app = FastAPI(title="Gestionale Magazzion/cantiere")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

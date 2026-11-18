@@ -1,4 +1,6 @@
-from sqlalchemy import create_engine, event
+import logging
+
+from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 DATABASE_URL = "sqlite:///./gestionale.db"
@@ -36,6 +38,20 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class Base(DeclarativeBase):
     pass
+
+def avvisa_tabelle_obsolete():
+    """create_all non elimina mai le tabelle: se si toglie un modello, la sua tabella
+    resta nel file .db e, con le foreign key attive, può bloccare le eliminazioni
+    (IntegrityError). Non si cancella nulla da soli (si perderebbero dati senza
+    backup): si avvisa all'avvio, perché il residuo non passi più inosservato.
+    Da chiamare dopo aver importato i models, altrimenti Base.metadata è vuoto."""
+    in_piu = sorted(set(inspect(engine).get_table_names()) - set(Base.metadata.tables))
+    if in_piu:
+        logging.getLogger("uvicorn.error").warning(
+            "Nel database ci sono tabelle che non esistono più nei models: %s. "
+            "Se hanno foreign key verso tabelle attive bloccano le eliminazioni. "
+            "Dopo un backup vanno rimosse con DROP TABLE (esempio: deploy/pulisci_tabelle_ordini.py).",
+            ", ".join(in_piu))
 
 def get_db():
     db = SessionLocal()
