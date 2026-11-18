@@ -9,20 +9,23 @@ from sqlalchemy.exc import IntegrityError
 from app import models, schemas
 from app.database import get_db, avvisa_tabelle_obsolete
 
-import hashlib, secrets, os
+import hashlib, json, secrets, os, threading
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 from urllib.parse import quote
+
+from pydantic import TypeAdapter, ValidationError
 
 avvisa_tabelle_obsolete()  # dopo l'import dei models: confronta con Base.metadata
 
 app = FastAPI(title="Gestionale Magazzion/cantiere")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
-# Versione basata sulla data di modifica del file: il browser scarica il CSS
+# Versione basata sulla data di modifica del file: il browser scarica il CSS/JS
 # aggiornato appena cambia, senza bisogno di ricordarsi di svuotare la cache.
 templates.env.globals["versione_css"] = lambda: int(os.path.getmtime("app/static/style.css"))
+templates.env.globals["versione_js"] = lambda: int(os.path.getmtime("app/static/combobox.js"))
 
 
 @app.exception_handler(IntegrityError)
@@ -296,46 +299,84 @@ def leggi_lotti(db: Session = Depends(get_db), utente: models.Utente = Depends(g
     return db.query(models.Lotto).all()
 
 
+# ponytail: un blocco solo per tutti i movimenti. Controllo della giacenza e scrittura
+# devono avvenire senza che un'altra richiesta si infili in mezzo (due richieste
+# potrebbero leggere lo stesso saldo e scalarlo due volte). Vale per un solo
+# processo del server; con piu' processi servirebbe un vincolo nel database.
+_blocco_movimenti = threading.Lock()
+MASSIMO_RIGHE_PER_INVIO = 200
+
+
 @app.post("/movimenti", response_model=schemas.MovimentoRead)
 def create_movimento(movimento: schemas.MovimentoCreate, db: Session = Depends(get_db), utente: models.Utente = Depends(get_utente_da_sessione)):
-    return registra_movimento(movimento, db)
+    with _blocco_movimenti:
+        return registra_movimento(movimento, db)
 
 @app.post("/movimenti/nuovo")
 def crea_movimento_da_form(
     request: Request,
-    lotto_id: int = Form(...),
-    posizione_partenza_id: str = Form(""),
+    posizione_partenza_id: int = Form(...),
     posizione_arrivo_id: int = Form(...),
-    quantita_usata: float = Form(...),
-    note: str = Form(""),
-    condizione_id: str = Form(""),
-    nota_partenza: str = Form(""),
-    condizione_partenza_id: str = Form(""),
+    righe: str = Form(...),
     db: Session = Depends(get_db),
     utente: models.Utente = Depends(get_utente_da_sessione),
 ):
-    movimento = schemas.MovimentoCreate(
-        lotto_id=lotto_id,
-        posizione_partenza_id=int(posizione_partenza_id) if posizione_partenza_id else None,
-        posizione_arrivo_id=posizione_arrivo_id,
-        quantita_usata=quantita_usata,
-        note=note or None,
-        condizione_id=int(condizione_id) if condizione_id else None,
-        nota_partenza=nota_partenza or None,
-        condizione_partenza_id=int(condizione_partenza_id) if condizione_partenza_id else None,
-    )
+    """Registra in un colpo solo tutti i materiali dell'elenco, dalla stessa partenza
+    alla stessa destinazione. Tutto o niente: se una riga non è valida (es. quantità
+    non più disponibile) non viene registrato nessun movimento."""
     try:
-        registra_movimento(movimento, db)
-    except HTTPException as errore:
+        elenco = TypeAdapter(list[schemas.RigaMovimentoForm]).validate_json(righe)
+    except ValidationError:
+        elenco = None
+    try:
+        righe_eco = json.loads(righe)
+        if not isinstance(righe_eco, list):
+            righe_eco = []
+    except ValueError:
+        righe_eco = []
+
+    def errore_form(messaggio: str, codice: int = 400):
         contesto = contesto_form_movimento(db, utente)
-        contesto["errore"] = errore.detail
-        return templates.TemplateResponse(request, "movimento_form.html", contesto, status_code=errore.status_code)
+        contesto["errore"] = messaggio
+        # Si riporta in pagina tutto quello che l'utente aveva preparato: perdere
+        # un elenco lungo per un solo errore sarebbe frustrante.
+        contesto["stato_iniziale"] = {"partenza": str(posizione_partenza_id), "arrivo": str(posizione_arrivo_id), "righe": righe_eco}
+        return templates.TemplateResponse(request, "movimento_form.html", contesto, status_code=codice)
+
+    if elenco is None:
+        return errore_form("L'elenco dei materiali non è leggibile (dati mancanti o non validi). Controlla le righe e riprova.")
+    if not elenco:
+        return errore_form("Aggiungi almeno un materiale all'elenco prima di registrare.")
+    if len(elenco) > MASSIMO_RIGHE_PER_INVIO:
+        return errore_form(f"Troppi materiali in un solo invio (massimo {MASSIMO_RIGHE_PER_INVIO}): dividili in più registrazioni.")
+    try:
+        with _blocco_movimenti:
+            for numero, riga in enumerate(elenco, start=1):
+                registra_movimento(
+                    schemas.MovimentoCreate(
+                        lotto_id=riga.lotto_id,
+                        posizione_partenza_id=posizione_partenza_id,
+                        posizione_arrivo_id=posizione_arrivo_id,
+                        quantita_usata=round(riga.quantita_usata, 2),
+                        note=riga.note or None,
+                        condizione_id=riga.condizione_id,
+                        nota_partenza=riga.nota_partenza or None,
+                        condizione_partenza_id=riga.condizione_partenza_id,
+                    ),
+                    db,
+                    commit=False,
+                )
+            db.commit()
+    except HTTPException as errore:
+        db.rollback()
+        lotto = db.query(models.Lotto).filter(models.Lotto.id == riga.lotto_id).first()
+        nome = lotto.materiale.nome if lotto else f"lotto {riga.lotto_id}"
+        return errore_form(f"Non è stato registrato nessun movimento. Materiale {numero} di {len(elenco)} ({nome}): {errore.detail}", errore.status_code)
     except IntegrityError:
         db.rollback()
-        contesto = contesto_form_movimento(db, utente)
-        contesto["errore"] = "Dato non più valido (es. condizione o posizione nel frattempo eliminata): riprova."
-        return templates.TemplateResponse(request, "movimento_form.html", contesto, status_code=400)
-    return redirect_con_messaggio("/movimenti/nuovo", "Movimento registrato")
+        return errore_form("Non è stato registrato nessun movimento: un dato non è più valido (es. condizione o posizione nel frattempo eliminata). Riprova.")
+    messaggio = "Movimento registrato" if len(elenco) == 1 else f"{len(elenco)} movimenti registrati"
+    return redirect_con_messaggio("/movimenti/nuovo", messaggio)
 
 
 RigaGiacenza = tuple[int, Optional[int], Optional[str]]  # (posizione_id, condizione_id, note)
@@ -437,7 +478,10 @@ def elimina_movimento_sicuro(db: Session, movimento: "models.Movimento") -> Opti
     return None
 
 
-def registra_movimento(movimento: schemas.MovimentoCreate, db: Session):
+def registra_movimento(movimento: schemas.MovimentoCreate, db: Session, commit: bool = True):
+    """Con commit=False il movimento viene solo 'scritto' nella transazione (flush):
+    le righe successive di uno stesso invio vedono già le giacenze aggiornate dalle
+    precedenti, e chi chiama decide se confermare o annullare tutto."""
     if movimento.quantita_usata <= 0:
         raise HTTPException(status_code=400, detail="La quantità deve essere maggiore di zero")
     lotto = db.query(models.Lotto).filter(models.Lotto.id == movimento.lotto_id).first()
@@ -446,6 +490,8 @@ def registra_movimento(movimento: schemas.MovimentoCreate, db: Session):
     posizione_arrivo = db.query(models.Posizione).filter(models.Posizione.id == movimento.posizione_arrivo_id).first()
     if posizione_arrivo is None:
         raise HTTPException(status_code=404, detail="Posizione di arrivo non trovata")
+    if posizione_arrivo.data_chiusura is not None:
+        raise HTTPException(status_code=400, detail="La posizione di arrivo è chiusa: riaprila prima di spostarci del materiale")
     riga_partenza: RigaGiacenza = (movimento.posizione_partenza_id, movimento.condizione_partenza_id, movimento.nota_partenza)
     riga_arrivo: RigaGiacenza = (movimento.posizione_arrivo_id, movimento.condizione_id, movimento.note)
     if riga_partenza == riga_arrivo:
@@ -466,6 +512,9 @@ def registra_movimento(movimento: schemas.MovimentoCreate, db: Session):
         dati["data_movimento"] = datetime.now()
     nuovo = models.Movimento(**dati)
     db.add(nuovo)
+    if not commit:
+        db.flush()
+        return nuovo
     db.commit()
     db.refresh(nuovo)
     return nuovo
@@ -496,6 +545,7 @@ def contesto_form_movimento(db: Session, utente: models.Utente) -> dict:
         "posizioni": posizioni,
         "condizioni": condizioni,
         "lotti_per_posizione": lotti_per_posizione,
+        "stato_iniziale": {"partenza": "", "arrivo": "", "righe": []},
         "utente": utente,
         "errore": None,
     }

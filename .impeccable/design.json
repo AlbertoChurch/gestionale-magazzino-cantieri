@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-02T18:00:00Z",
+  "generatedAt": "2026-10-02T21:00:00Z",
   "title": "Design System: Gestionale Magazzino",
   "extensions": {
     "colorMeta": {
@@ -10,7 +10,12 @@
       "field-bg": { "role": "neutral", "displayName": "Campo", "canonical": "#e9f1e4", "tonalRamp": ["#23321a", "#3b542c", "#53763d", "#6a974e", "#92b979", "#bbd3ab", "#d6e5cd", "#f1f6ee"] },
       "surface": { "role": "neutral", "displayName": "Superficie", "canonical": "#f6faf3", "tonalRamp": ["#23321a", "#3b542c", "#53763d", "#6a974e", "#92b979", "#bbd3ab", "#e0ecda", "#f6faf3"] },
       "ink": { "role": "neutral", "displayName": "Inchiostro", "canonical": "#16241a", "tonalRamp": ["#16241a", "#1d2f22", "#304f39", "#446f50", "#578e67", "#80b28e", "#b0cfb9", "#eff5f1"] },
+      "placeholder": { "role": "neutral", "displayName": "Segnaposto", "canonical": "#566a5e", "tonalRamp": ["#1b2620", "#2a3a31", "#3a4f43", "#566a5e", "#7a8f82", "#a0b2a7", "#c7d3cb", "#eef2ef"] },
+      "on-fill": { "role": "neutral", "displayName": "Bianco su riempimento", "canonical": "#ffffff", "tonalRamp": ["#ffffff"] },
       "sidebar-bg": { "role": "neutral", "displayName": "Barra laterale", "canonical": "#0f2519", "tonalRamp": ["#0f2519", "#163625", "#1f4a31", "#255b3d", "#337f56", "#6ec495", "#a4dabd", "#edf8f2"] },
+      "sidebar-brand-green": { "role": "tertiary", "displayName": "Verde marchio su scuro", "canonical": "#7fd08f", "tonalRamp": ["#1d4a27", "#2d6f3b", "#3f954f", "#57b568", "#7fd08f", "#a6e0b1", "#cdeed3", "#ecf9ee"] },
+      "sidebar-active-green": { "role": "tertiary", "displayName": "Verde attivo su scuro", "canonical": "#8ee09e", "tonalRamp": ["#1d4a27", "#2d6f3b", "#3f954f", "#5cba6e", "#8ee09e", "#b0eaba", "#d3f4d9", "#effaf1"] },
+      "login-brand-green": { "role": "tertiary", "displayName": "Verde marchio login", "canonical": "#9be5aa", "tonalRamp": ["#1d4a27", "#2d6f3b", "#3f954f", "#5cba6e", "#9be5aa", "#b8ecc2", "#d6f4db", "#f0faf2"] },
       "danger": { "role": "secondary", "displayName": "Rosso Allarme", "canonical": "#c62828", "tonalRamp": ["#400d0d", "#6a1515", "#941e1e", "#bf2727", "#dd5555", "#ea9595", "#f2bfbf", "#fbeaea"] },
       "warning": { "role": "secondary", "displayName": "Giallo Segnale", "canonical": "#fde047", "tonalRamp": ["#4c4001", "#7e6a01", "#b19502", "#e3bf02", "#fddd35", "#feea81", "#fef2b3", "#fffbe6"] }
     },
@@ -18,21 +23,27 @@
       "headline": { "displayName": "Titolo pagina", "purpose": "h1 di ogni pagina." },
       "title": { "displayName": "Titolo card", "purpose": "h2 delle card e marchio del login." },
       "subtitle": { "displayName": "Sottotitolo", "purpose": "legend dei fieldset, titolo dei passi, voce vuota in evidenza." },
-      "body": { "displayName": "Testo", "purpose": "Testo corrente, input, celle." },
-      "body-small": { "displayName": "Testo piccolo", "purpose": "Etichette campi, testata tabelle, bottoni secondari, meta." },
-      "label": { "displayName": "Etichetta", "purpose": "dt dei pannelli dati e sezioni della barra laterale." }
+      "body": { "displayName": "Testo", "purpose": "Testo corrente, input, celle, voci dell'elenco a tendina." },
+      "body-small": { "displayName": "Testo piccolo", "purpose": "Etichette campi, testata tabelle, bottoni secondari, meta, contatore." },
+      "label": { "displayName": "Etichetta", "purpose": "dt dei pannelli dati e sezioni della barra laterale." },
+      "compact-button": { "displayName": "Bottone compatto", "purpose": "Eccezione registrata alla scala: 0.8125rem solo per bottoni secondari nelle tabelle dense." }
     },
     "shadows": [
       { "name": "card", "value": "0 1px 2px rgba(22,36,26,0.06), 0 2px 8px rgba(22,36,26,0.04)", "purpose": "Card a riposo." },
-      { "name": "pop", "value": "0 1px 3px rgba(14,26,18,0.2), 0 10px 28px rgba(14,26,18,0.22)", "purpose": "Toast e card del login." },
+      { "name": "pop", "value": "0 1px 3px rgba(14,26,18,0.2), 0 10px 28px rgba(14,26,18,0.22)", "purpose": "Toast, elenco a tendina aperto e card del login." },
       { "name": "field-focus", "value": "0 0 0 3px rgba(30,122,60,0.2)", "purpose": "Anello di focus dei campi di input." }
+    ],
+    "radii": [
+      { "name": "radius", "value": "10px", "purpose": "Card, toast, elenco a tendina aperto." },
+      { "name": "radius-sm", "value": "7px", "purpose": "Bottoni, campi, tabelle, riquadri, voci, contatore." },
+      { "name": "scrollbar-thumb", "value": "4px", "purpose": "Eccezione deliberata: pollice largo 8px della barra di scorrimento della sidebar." }
     ],
     "motion": [
       { "name": "duration-quick", "value": "150ms", "purpose": "Hover, focus, colori, dissolvenza di pagina." },
-      { "name": "duration-fast", "value": "250ms", "purpose": "Chevron della barra, uscita del toast." },
+      { "name": "duration-fast", "value": "250ms", "purpose": "Chevron della barra, freccia dell'elenco, uscita del toast." },
       { "name": "duration-medium", "value": "350ms", "purpose": "Apertura sottomenu, entrata del toast." },
       { "name": "ease-smooth-out", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Unico easing per transform e movimento." },
-      { "name": "scale-press", "value": "0.96", "purpose": "Scala dei bottoni in pressione." },
+      { "name": "scale-press", "value": "0.96", "purpose": "Scala dei bottoni (anche a.btn-secondario) in pressione." },
       { "name": "toast-enter", "value": "translateY(-16px) scale(0.97) blur(2px) -> none", "purpose": "Salita del toast." },
       { "name": "reduced-motion", "value": "durations 0.01ms under prefers-reduced-motion: reduce; view transition only under no-preference", "purpose": "Guardia di accessibilita'." }
     ],
@@ -53,9 +64,17 @@
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Azioni secondarie, anche come link (a.btn-secondario).",
-      "html": "<button class=\"ds-btn-secondary\">Modifica</button>",
-      "css": ".ds-btn-secondary { font: inherit; font-size: 0.875rem; font-weight: 600; background: #f6faf3; color: #16241a; border: 1px solid #b4c9ab; padding: 0 13px; min-height: 36px; border-radius: 7px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, transform 150ms cubic-bezier(0.22,1,0.36,1); } .ds-btn-secondary:hover { background: #e0ecda; border-color: #1e7a3c; } .ds-btn-secondary:focus-visible { outline: 2px solid #1e7a3c; outline-offset: 2px; } .ds-btn-secondary:active { transform: scale(0.96); }"
+      "description": "Azioni secondarie; .grande a 42px per righe di campi e passi.",
+      "html": "<button class=\"ds-btn-secondary\">Modifica</button> <button class=\"ds-btn-secondary ds-grande\">Aggiungi alla lista</button>",
+      "css": ".ds-btn-secondary { font: inherit; font-size: 0.875rem; font-weight: 600; background: #f6faf3; color: #16241a; border: 1px solid #b4c9ab; padding: 0 13px; min-height: 36px; border-radius: 7px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, transform 150ms cubic-bezier(0.22,1,0.36,1); } .ds-btn-secondary.ds-grande { min-height: 42px; } .ds-btn-secondary:hover { background: #e0ecda; border-color: #1e7a3c; } .ds-btn-secondary:focus-visible { outline: 2px solid #1e7a3c; outline-offset: 2px; } .ds-btn-secondary:active { transform: scale(0.96); }"
+    },
+    {
+      "name": "Secondary Link Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Link con aspetto di bottone secondario (a.btn-secondario); mai un button dentro un link.",
+      "html": "<a href=\"#\" class=\"ds-btn-link\">Modifica</a>",
+      "css": ".ds-btn-link { display: inline-flex; align-items: center; font-size: 0.875rem; font-weight: 600; background: #f6faf3; color: #16241a; text-decoration: none; border: 1px solid #b4c9ab; padding: 0 13px; min-height: 36px; border-radius: 7px; transition: background-color 150ms ease, border-color 150ms ease, transform 150ms cubic-bezier(0.22,1,0.36,1); } .ds-btn-link:hover { background: #e0ecda; border-color: #1e7a3c; color: #16241a; } .ds-btn-link:focus-visible { outline: 2px solid #1e7a3c; outline-offset: 2px; } .ds-btn-link:active { transform: scale(0.96); }"
     },
     {
       "name": "Confirm Delete Button",
@@ -71,7 +90,15 @@
       "refersTo": "input",
       "description": "Campo di testo con etichetta sopra.",
       "html": "<label class=\"ds-label\">Quantita'<input class=\"ds-input\" value=\"12\"></label>",
-      "css": ".ds-label { display: block; font-size: 0.875rem; font-weight: 500; color: #4b5f53; } .ds-input { display: block; width: 100%; max-width: 420px; margin-top: 6px; padding: 10px 12px; min-height: 42px; border: 1px solid #b4c9ab; border-radius: 7px; font: inherit; font-size: 0.9375rem; background: #f6faf3; color: #16241a; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input:hover { border-color: #1e7a3c; } .ds-input:focus { outline: none; border-color: #1e7a3c; box-shadow: 0 0 0 3px rgba(30,122,60,0.2); }"
+      "css": ".ds-label { display: block; font-size: 0.875rem; font-weight: 500; color: #4b5f53; } .ds-input { display: block; width: 100%; max-width: 420px; margin-top: 6px; padding: 10px 12px; min-height: 42px; border: 1px solid #b4c9ab; border-radius: 7px; font: inherit; font-size: 0.9375rem; background: #f6faf3; color: #16241a; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input::placeholder { color: #566a5e; } .ds-input:hover { border-color: #1e7a3c; } .ds-input:focus { outline: none; border-color: #1e7a3c; box-shadow: 0 0 0 3px rgba(30,122,60,0.2); }"
+    },
+    {
+      "name": "Searchable Select (combo)",
+      "kind": "input",
+      "refersTo": "combo-input",
+      "description": "Campo in cui si scrive con elenco filtrato sotto (o sopra); il select nativo resta invisibile come fonte dei dati. Frecce, Invio, Esc, Tab; filtro senza maiuscole e accenti; solo voci esistenti.",
+      "html": "<div class=\"ds-combo\"><input class=\"ds-combo-input\" value=\"Magaz\"><span class=\"ds-combo-freccia\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m6 9 6 6 6-6\"/></svg></span><ul class=\"ds-combo-lista\"><li class=\"ds-combo-opzione ds-attiva\"><span><strong class=\"ds-evidenza\">Magaz</strong>zino centrale</span></li><li class=\"ds-combo-opzione ds-selezionata\"><span><strong class=\"ds-evidenza\">Magaz</strong>zino nord</span></li><li class=\"ds-combo-opzione\"><span>Cantiere</span></li></ul></div>",
+      "css": ".ds-combo { position: relative; width: 100%; max-width: 420px; padding-bottom: 150px; } .ds-combo-input { display: block; width: 100%; min-height: 42px; padding: 10px 38px 10px 12px; border: 1px solid #1e7a3c; border-radius: 7px; font: inherit; font-size: 0.9375rem; background: #f6faf3; color: #16241a; box-shadow: 0 0 0 3px rgba(30,122,60,0.2); outline: none; text-overflow: ellipsis; } .ds-combo-freccia { position: absolute; top: 0; right: 0; height: 42px; width: 38px; display: grid; place-items: center; color: #4b5f53; transform: rotate(180deg); } .ds-combo-lista { position: absolute; left: 0; right: 0; top: calc(42px + 4px); margin: 0; padding: 4px; list-style: none; background: #f6faf3; border: 1px solid #b4c9ab; border-radius: 10px; box-shadow: 0 1px 3px rgba(14,26,18,0.2), 0 10px 28px rgba(14,26,18,0.22); font-size: 0.9375rem; color: #16241a; } .ds-combo-opzione { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; cursor: pointer; } .ds-combo-opzione.ds-attiva { background: #d3e8d2; } .ds-combo-opzione.ds-selezionata { font-weight: 650; color: #145a2b; } .ds-combo-opzione.ds-selezionata::after { content: ''; flex: none; width: 10px; height: 5px; margin-bottom: 3px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); } .ds-evidenza { font-weight: 700; color: #145a2b; }"
     },
     {
       "name": "Sidebar Navigation",
@@ -93,17 +120,33 @@
       "name": "Step Header",
       "kind": "custom",
       "refersTo": "step-number",
-      "description": "Intestazione numerata dei passi di Nuovo movimento.",
-      "html": "<h2 class=\"ds-step\"><span class=\"ds-step-n\">1</span>Da dove parte</h2>",
-      "css": ".ds-step { display: flex; align-items: center; gap: 10px; font-size: 1.0625rem; font-weight: 650; margin: 0 0 14px; color: #16241a; } .ds-step-n { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #1e7a3c; color: #ffffff; font-size: 0.875rem; font-weight: 700; }"
+      "description": "Intestazione numerata dei passi di Nuovo movimento; il passo 3 porta il contatore della lista.",
+      "html": "<h2 class=\"ds-step\"><span class=\"ds-step-n\">3</span>Da spostare <span class=\"ds-count\">2</span></h2>",
+      "css": ".ds-step { display: flex; align-items: center; gap: 10px; font-size: 1.0625rem; font-weight: 650; margin: 0 0 14px; color: #16241a; } .ds-step-n { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #1e7a3c; color: #ffffff; font-size: 0.875rem; font-weight: 700; } .ds-count { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 8px; border-radius: 7px; background: #d3e8d2; color: #145a2b; font-size: 0.875rem; font-weight: 700; }"
+    },
+    {
+      "name": "Material List (materiali da spostare)",
+      "kind": "custom",
+      "refersTo": "empty-compact",
+      "description": "Lista del movimento: tabella densa scorrevole con Togli per riga e Svuota la lista; stato vuoto compatto tratteggiato quando non ci sono righe.",
+      "html": "<div class=\"ds-scroll\"><table class=\"ds-dense\"><thead><tr><th>Materiale</th><th class=\"ds-num\">Quantita'</th><th>Unita'</th><th></th></tr></thead><tbody><tr><td>Granulo</td><td class=\"ds-num\">40</td><td>kg</td><td><button class=\"ds-compact\">Togli</button></td></tr></tbody></table></div><p class=\"ds-empty\"><strong>La lista e' vuota</strong>Scegli un materiale e premi \"Aggiungi alla lista\".</p>",
+      "css": ".ds-scroll { overflow-x: auto; margin-bottom: 16px; } .ds-dense { width: 100%; border-collapse: collapse; background: #f6faf3; border: 1px solid #cddcc5; border-radius: 7px; font-variant-numeric: tabular-nums; } .ds-dense th, .ds-dense td { text-align: left; padding: 10px 8px; font-size: 0.875rem; border-bottom: 1px solid #cddcc5; } .ds-dense th { background: #e0ecda; color: #145a2b; font-weight: 650; } .ds-dense .ds-num { text-align: right; } .ds-compact { font: inherit; font-size: 0.8125rem; font-weight: 600; background: #f6faf3; color: #16241a; border: 1px solid #b4c9ab; padding: 0 10px; min-height: 32px; border-radius: 7px; cursor: pointer; } .ds-compact:hover { background: #e0ecda; border-color: #1e7a3c; } .ds-compact:focus-visible { outline: 2px solid #1e7a3c; outline-offset: 2px; } .ds-empty { text-align: center; padding: 18px 14px; margin: 0 0 16px; color: #4b5f53; border: 1px dashed #b4c9ab; border-radius: 7px; } .ds-empty strong { display: block; color: #16241a; font-size: 1.0625rem; margin-bottom: 4px; }"
     },
     {
       "name": "Summary Banner",
       "kind": "custom",
       "refersTo": "summary-banner",
-      "description": "Riepilogo verde tenue prima della conferma.",
-      "html": "<div class=\"ds-summary\">Sposti 12 pezzi da Magazzino a Cantiere.</div>",
+      "description": "Riepilogo verde tenue prima della conferma (role=status).",
+      "html": "<div class=\"ds-summary\">Stai spostando 3 materiali da Magazzino a Cantiere.</div>",
       "css": ".ds-summary { background: #d3e8d2; border: 1px solid #b4c9ab; border-radius: 7px; padding: 12px 16px; font-weight: 500; color: #16241a; }"
+    },
+    {
+      "name": "Inline Error",
+      "kind": "custom",
+      "refersTo": "error-box",
+      "description": "Riquadro errore a blocco sotto il campo o la riga interessata (.errore.in-linea).",
+      "html": "<p class=\"ds-error\">Scrivi una quantita' maggiore di zero.</p>",
+      "css": ".ds-error { display: block; color: #9b1c1c; background: #fbe9e7; border: 1px solid #f0b8b2; padding: 12px 16px; border-radius: 7px; margin: 6px 0 0; font-weight: 500; }"
     },
     {
       "name": "Toast",
@@ -116,38 +159,43 @@
   ],
   "narrative": {
     "northStar": "Il Campo in Ordine",
-    "overview": "Un gestionale per chi registra spostamenti di materiale per campi sportivi, usato ogni giorno da personale non tecnico su PC desktop. Il sistema e' un campo ben tenuto: superfici verde erba molto chiare, una barra laterale verde quasi nero che fa da bordo del campo, un solo verde pieno per le azioni. Tutto e' piano, leggibile, prevedibile; l'espressivita' cede sempre alla chiarezza.\n\nLa densita' e' da strumento di lavoro: tabelle, filtri e form in card ordinate su una colonna centrale di 1200px. La struttura porta il significato; il colore dice solo stato e azione. Il tema erba sintetica e' letterale in un solo punto, lo sfondo del login.",
+    "overview": "Un gestionale per chi registra spostamenti di materiale per campi sportivi, usato ogni giorno da personale non tecnico su PC desktop. Il sistema e' un campo ben tenuto: superfici verde erba molto chiare, una barra laterale verde quasi nero che fa da bordo del campo, un solo verde pieno per le azioni. Tutto e' piano, leggibile, prevedibile; l'espressivita' cede sempre alla chiarezza.\n\nLa densita' e' da strumento di lavoro: tabelle, filtri e form in card ordinate su una colonna centrale di 1200px. La struttura (card, passi numerati, tabelle) porta il significato; il colore dice solo stato e azione. Il tema erba sintetica e' letterale in un solo punto, lo sfondo del login, dove compaiono le strisce di sfalcio. Altrove e' solo tinta.\n\nIl sistema rifiuta il bianco puro come superficie (impegno del committente), i font o risorse esterni (l'app gira offline) e il movimento che non comunica uno stato.",
     "keyCharacteristics": [
-      "Verdi con una punta di giallo, mai bianco puro come superficie.",
+      "Verdi con una punta di giallo, mai bianco puro come superficie; il bianco appare solo come testo su verde pieno, rosso o barra scura.",
       "Un solo accento pieno (verde erba); rosso e giallo solo per esito e pericolo.",
-      "Piatto con ombre minime: l'ombra forte solo per popup e login.",
+      "Piatto con ombre minime: la profondita' viene dai toni delle superfici, l'ombra forte solo per cio' che galleggia (toast, elenco a tendina, login).",
       "Font di sistema Segoe UI, scala tipografica corta in rem.",
+      "Le liste a tendina sono campi in cui si scrive, sopra un select nativo che resta la fonte dei dati.",
       "Movimento breve e leggero, spento con prefers-reduced-motion."
     ],
     "rules": [
-      { "name": "The No Pure White Rule", "body": "Nessuna superficie e' #fff: la piu' chiara e' #f6faf3. Il bianco e' ammesso solo come testo o icona su verde pieno, rosso o barra laterale.", "section": "colors" },
-      { "name": "The One Green Rule", "body": "Un solo verde pieno comanda le azioni; gli stati passano per rosso e giallo, mai per un secondo verde.", "section": "colors" },
+      { "name": "The No Pure White Rule", "body": "Nessuna superficie e' #fff: la piu' chiara e' #f6faf3. Il bianco (on-fill, #ffffff) e' ammesso solo come TESTO o icona su riempimenti saturi o scuri: bottone primario, conferma elimina, numero del passo, toast, voce attiva e marchio della barra, marchio del login. Mai come sfondo.", "section": "colors" },
+      { "name": "The One Green Rule", "body": "Un solo verde pieno comanda le azioni; gli stati passano per rosso e giallo, mai per un secondo verde. I tre verdi chiari su fondo scuro sono tinte di icona, non azioni.", "section": "colors" },
       { "name": "The Tinted Neutral Rule", "body": "Ogni grigio e' tirato verso il verde della tavolozza; niente grigi neutri.", "section": "colors" },
-      { "name": "The Short Ladder Rule", "body": "Si usano solo i sei passi della scala (0.78 / 0.875 / 0.9375 / 1.0625 / 1.25 / 1.625rem).", "section": "typography" },
+      { "name": "The Short Ladder Rule", "body": "Si usano i sei passi della scala (0.78 / 0.875 / 0.9375 / 1.0625 / 1.25 / 1.625rem); l'unica eccezione registrata e' 0.8125rem per i bottoni compatti nelle tabelle dense. Ogni altro valore va aggiunto alla scala o evitato.", "section": "typography" },
       { "name": "The Tabular Numbers Rule", "body": "Le tabelle usano cifre tabulari e colonne numeriche allineate a destra.", "section": "typography" },
-      { "name": "The Flat-Until-Floating Rule", "body": "Le superfici di lavoro sono quasi piatte; l'ombra marcata e' per toast e login.", "section": "elevation" }
+      { "name": "The Flat-Until-Floating Rule", "body": "Le superfici di lavoro sono quasi piatte; l'ombra marcata e' per toast, elenco a tendina aperto e login.", "section": "elevation" }
     ],
     "dos": [
-      "Do usare solo i token del :root e aggiungerne uno prima di scrivere un valore nuovo.",
-      "Do tenere superfici in verde chiaro (#f6faf3 e piu' scure), mai #fff.",
-      "Do usare il verde erba pieno solo per l'azione principale della vista.",
-      "Do dare ai bersagli cliccabili almeno 36px di altezza (42px per azioni primarie e campi).",
+      "Do usare solo i token del :root (colori, scala dei font, raggi, ombre, durate) e aggiungerne uno prima di scrivere un valore nuovo.",
+      "Do tenere superfici in verde chiaro (#f6faf3 e piu' scure), mai #fff; il bianco solo come testo o icona su verde pieno, rosso o fondi scuri.",
+      "Do usare il verde erba pieno solo per l'azione principale della vista; i bottoni secondari per tutto il resto.",
+      "Do dare ai bersagli cliccabili almeno 36px di altezza (42px per azioni primarie e campi; 32px solo per i bottoni compatti nelle tabelle dense).",
+      "Do usare i raggi 10px e 7px; ogni nuovo elemento sceglie uno dei due.",
       "Do far seguire ogni eliminazione da una conferma in due passi e da un toast di esito.",
-      "Do verificare il contrasto del testo su ogni nuovo fondo.",
+      "Do lasciare che ogni <select> diventi un elenco a tendina con ricerca, tenendo il select nativo come fonte dei dati; per i link con aspetto di bottone usare a.btn-secondario.",
+      "Do raccogliere piu' righe in una lista e registrarle con un solo invio, tutto o niente.",
+      "Do verificare il contrasto del testo su ogni nuovo fondo; i valori attuali stanno tra 5.09:1 e 15.28:1.",
       "Do rispettare prefers-reduced-motion per ogni nuova animazione."
     ],
     "donts": [
-      "Don't usare le strisce di sfalcio fuori dal login.",
-      "Don't caricare font, icone o script da risorse esterne.",
-      "Don't usare il colore come unico segnale.",
-      "Don't introdurre un secondo accento pieno oltre al verde erba.",
-      "Don't aggiungere ombre marcate alle card di lavoro.",
-      "Don't annidare un button dentro un link: usare a.btn-secondario."
+      "Don't usare le strisce di sfalcio fuori dal login: e' l'unico punto letterale del tema.",
+      "Don't caricare font, icone o script da risorse esterne: l'app gira offline.",
+      "Don't usare il colore come unico segnale: rosso e giallo accompagnano sempre un testo; la voce selezionata dell'elenco ha anche spunta e peso.",
+      "Don't introdurre un secondo accento pieno oltre al verde erba, ne' usare i verdi chiari da fondo scuro su superfici chiare o come testo.",
+      "Don't aggiungere ombre marcate alle card di lavoro: l'ombra pop e' per toast, elenco a tendina e login.",
+      "Don't annidare un button dentro un link: usare a.btn-secondario.",
+      "Don't permettere nell'elenco a tendina valori che non esistono tra le opzioni."
     ]
   }
 }

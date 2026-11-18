@@ -67,15 +67,15 @@ riavvia il server. Non tocca mai `gestionale.db` (è escluso da git).
    dati) è quello da portare/copiare sul PC del cliente durante
    l'installazione — non serve reimportare tutto da capo lì.
 
-> **Attenzione al database da consegnare.** Il tuo `gestionale.db` di
-> sviluppo contiene ancora le vecchie tabelle degli ordini
-> (`materiali_ordini`, `bolle_ordini`, `ordini`, `stati_ordine`), con
-> righe orfane che oggi bloccano l'eliminazione di alcuni materiali
-> nuovi (errore 409). Un cliente non deve ereditarle: per lui crea un
-> database **pulito** (rinomina il tuo `gestionale.db`, lancia
+> **Attenzione al database da consegnare.** Fino al 2026-10-02 il
+> `gestionale.db` di sviluppo conteneva ancora le vecchie tabelle degli
+> ordini (`materiali_ordini`, `bolle_ordini`, `ordini`, `stati_ordine`) con
+> righe orfane, che bloccavano l'eliminazione di alcuni materiali nuovi
+> (errore 409). Sono state ripulite (con backup), ma un database vecchio può
+> averle ancora. Al cliente consegna comunque un database **pulito**, senza i
+> tuoi dati di prova: rinomina il tuo `gestionale.db`, lancia
 > `python -c "from app.database import Base, engine; from app import models; Base.metadata.create_all(engine)"`,
-> poi `deploy\primo_admin.py` e `deploy\importa_dati.py`) e consegna
-> quel file.
+> poi `deploy\primo_admin.py` e `deploy\importa_dati.py`, e consegna quel file.
 
 ## Cose da sapere
 

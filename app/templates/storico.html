@@ -135,7 +135,7 @@
         }
 
         function azzeraFiltriStorico() {
-            document.querySelectorAll('.filtri-storico input, .filtri-storico select').forEach(function (campo) {
+            document.querySelectorAll('.filtri-storico input:not(.combo-input), .filtri-storico select').forEach(function (campo) {
                 campo.value = '';
             });
             filtraStorico();

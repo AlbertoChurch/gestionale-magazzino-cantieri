@@ -47,6 +47,24 @@
         ],
         "createdAt": "2026-10-02T17:23:47.588Z",
         "reason": "false positive: .login-card sets border:0 so only the shadow is rendered (verified in screenshot); the detector does not resolve the cascade override; assistant decision"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "app/templates/_nav.html"
+        ],
+        "createdAt": "2026-10-02T18:28:58.004Z",
+        "reason": "false positive: partial template included by every page, analysed alone without style.css so the text colour resolves to the browser default; assistant decision"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "app/templates/_bolla_card.html"
+        ],
+        "createdAt": "2026-10-02T18:28:58.346Z",
+        "reason": "false positive: partial template included by every page, analysed alone without style.css so the text colour resolves to the browser default; assistant decision"
       }
     ]
   }

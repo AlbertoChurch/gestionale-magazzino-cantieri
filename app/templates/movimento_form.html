@@ -14,38 +14,18 @@
         <p class="errore" role="alert">{{ errore }}</p>
         {% endif %}
         <div class="card">
-        <form method="post" action="/movimenti/nuovo">
+        <form method="post" action="/movimenti/nuovo" id="form-movimento">
             <section class="passo">
-                <h2 class="passo-titolo"><span class="passo-numero">1</span>Cosa sposti</h2>
+                <h2 class="passo-titolo"><span class="passo-numero">1</span>Da dove e verso dove</h2>
                 <div class="form-griglia">
                     <label>Da dove prelevi
-                        <select id="posizione_partenza" name="posizione_partenza_id" onchange="aggiornaMateriali();" required autofocus>
+                        <select id="posizione_partenza" name="posizione_partenza_id" onchange="cambiaPartenza()" required autofocus>
                             <option value="">Seleziona una posizione</option>
                             {% for posizione in posizioni %}
                             <option value="{{ posizione.id }}">{{ posizione.nome }}</option>
                             {% endfor %}
                         </select>
                     </label>
-                    <label>Materiale disponibile lì
-                        <select id="riga_scelta" onchange="aggiornaQuantita()" required disabled>
-                            <option value="">Scegli prima la posizione di partenza</option>
-                        </select>
-                    </label>
-                </div>
-                <input type="hidden" id="lotto_id" name="lotto_id">
-                <input type="hidden" id="condizione_partenza_id" name="condizione_partenza_id">
-                <input type="hidden" id="nota_partenza" name="nota_partenza">
-
-                <dl class="riquadro-info" id="info_lotto" hidden>
-                    <div><dt>Bolla</dt><dd id="info_bolla"></dd></div>
-                    <div><dt>Unità di misura</dt><dd id="info_unita"></dd></div>
-                    <div><dt>Disponibile qui</dt><dd id="info_disponibile"></dd></div>
-                </dl>
-            </section>
-
-            <section class="passo">
-                <h2 class="passo-titolo"><span class="passo-numero">2</span>Dove va e quanto</h2>
-                <div class="form-griglia">
                     <label>Verso
                         <select id="posizione_arrivo" name="posizione_arrivo_id" onchange="aggiornaRiepilogo()" required>
                             <option value="">Seleziona una posizione</option>
@@ -54,141 +34,347 @@
                             {% endfor %}
                         </select>
                     </label>
-                    <label>Quantità
-                        <input type="number" step="0.01" min="0.01" inputmode="decimal" id="quantita_usata" name="quantita_usata" oninput="aggiornaRiepilogo()" required>
-                    </label>
                 </div>
             </section>
 
             <section class="passo">
-                <h2 class="passo-titolo"><span class="passo-numero">3</span>Condizione e note</h2>
+                <h2 class="passo-titolo"><span class="passo-numero">2</span>Scegli cosa spostare</h2>
                 <div class="form-griglia">
+                    <label class="campo-largo">Materiale disponibile lì
+                        <select id="riga_scelta" form="nessuno" data-segnaposto onchange="aggiornaQuantita()" disabled>
+                            <option value="">Scegli prima la posizione di partenza</option>
+                        </select>
+                    </label>
+                    <label>Quantità
+                        <input type="number" step="0.01" min="0.01" inputmode="decimal" id="quantita_usata" form="nessuno">
+                    </label>
                     <label>Condizione all'arrivo
-                        <select id="condizione_id" name="condizione_id" onchange="segnalaModifica('condizione_id')">
+                        <select id="condizione_id" form="nessuno" onchange="segnalaModifica('condizione_id')">
                             <option value="">Non specificata</option>
                             {% for condizione in condizioni %}
                             <option value="{{ condizione.id }}">{{ condizione.nome }}</option>
                             {% endfor %}
                         </select>
                     </label>
-                    <label>Note
-                        <input type="text" id="note" name="note" oninput="segnalaModifica('note')">
+                    <label class="campo-largo">Note
+                        <input type="text" id="note" form="nessuno" oninput="segnalaModifica('note')">
                     </label>
                 </div>
+
+                <dl class="riquadro-info" id="info_lotto" hidden>
+                    <div><dt>Bolla</dt><dd id="info_bolla"></dd></div>
+                    <div><dt>Unità di misura</dt><dd id="info_unita"></dd></div>
+                    <div><dt>Ancora disponibile qui</dt><dd id="info_disponibile"></dd></div>
+                </dl>
                 <p class="nota-giallo">
                     Condizione e note partono uguali a quelle del materiale prelevato.
                     Se le cambi, il campo diventa <span class="modificato">giallo</span>:
                     all'arrivo verrà creata una riga di giacenza a sé, distinta da quella di partenza.
                 </p>
+                <p class="errore" id="errore-riga" role="alert" hidden></p>
+                <button type="button" class="btn-secondario grande" id="btn-aggiungi" onclick="aggiungiRiga()">Aggiungi alla lista</button>
             </section>
 
-            <p class="riepilogo" id="riepilogo" role="status" hidden></p>
-            <button type="submit">Registra movimento</button>
+            <section class="passo">
+                <h2 class="passo-titolo"><span class="passo-numero">3</span>Da spostare <span class="conteggio-lista" id="conteggio-lista" hidden></span></h2>
+                <p class="vuoto vuoto-compatto" id="lista-vuota"><strong>La lista è vuota</strong>Scegli un materiale e premi "Aggiungi alla lista". Ne puoi aggiungere quanti ne servono, poi registri tutto insieme.</p>
+                <div class="tabella-scroll" id="blocco-lista" hidden>
+                    <table class="tabella-densa">
+                        <thead>
+                            <tr><th>Materiale</th><th class="num">Quantità</th><th>Unità</th><th>Condizione all'arrivo</th><th>Note</th><th><span class="sr-only">Azioni</span></th></tr>
+                        </thead>
+                        <tbody id="righe-lista"></tbody>
+                    </table>
+                    <button type="button" class="btn-secondario" onclick="svuotaLista()">Svuota la lista</button>
+                </div>
+
+                <p class="riepilogo" id="riepilogo" role="status" hidden></p>
+                <input type="hidden" name="righe" id="righe">
+                <button type="submit" id="btn-registra">Registra movimento</button>
+            </section>
         </form>
         </div>
     </main>
     <script>
         const lottiPerPosizione = {{ lotti_per_posizione | tojson }};
-        let valoriOriginali = { condizione_id: "", note: "" };
+        const statoIniziale = {{ stato_iniziale | tojson }};
+        const $ = id => document.getElementById(id);
 
-        function rigaCorrente() {
-            const posizioneId = document.getElementById('posizione_partenza').value;
-            const indice = document.getElementById('riga_scelta').value;
-            return (lottiPerPosizione[posizioneId] || [])[indice];
-        }
+        let lista = [];
+        let partenzaCorrente = '';
+        let valoriOriginali = { condizione_id: '', note: '' };
+
+        const arrotonda = n => Math.round(n * 100) / 100;
+        const chiaveRiga = r => [r.lotto_id, r.condizione_id || '', r.note || ''].join('|');
+        const giaInLista = chiave => arrotonda(lista.filter(v => v.chiave === chiave).reduce((somma, v) => somma + v.quantita_usata, 0));
 
         function nomeSelezionato(id) {
-            const select = document.getElementById(id);
+            const select = $(id);
             return select.options[select.selectedIndex] ? select.options[select.selectedIndex].textContent : '';
         }
 
+        // Righe della partenza scelta con quello che resta dopo quanto e' gia' in lista.
+        function righeDisponibili() {
+            return (lottiPerPosizione[$('posizione_partenza').value] || []).map(function (riga, indice) {
+                return { riga: riga, indice: indice, rimasta: arrotonda(riga.quantita_disponibile - giaInLista(chiaveRiga(riga))) };
+            }).filter(x => x.rimasta > 0);
+        }
+
+        function rigaCorrente() {
+            const valore = $('riga_scelta').value;
+            return valore === '' ? undefined : righeDisponibili().find(x => String(x.indice) === valore);
+        }
+
+        function mostraErroreRiga(testo) {
+            $('errore-riga').textContent = testo;
+            $('errore-riga').hidden = false;
+        }
+
+        function nascondiErroreRiga() { $('errore-riga').hidden = true; }
+
+        function cambiaPartenza() {
+            const nuova = $('posizione_partenza').value;
+            if (lista.length && nuova !== partenzaCorrente) {
+                $('posizione_partenza').value = partenzaCorrente;
+                mostraErroreRiga('Hai già dei materiali in lista presi da ' + nomeSelezionato('posizione_partenza') + '. Per cambiare la posizione di partenza svuota prima la lista.');
+                return;
+            }
+            partenzaCorrente = nuova;
+            nascondiErroreRiga();
+            aggiornaMateriali();
+        }
+
         function aggiornaMateriali() {
-            const posizioneId = document.getElementById('posizione_partenza').value;
-            const select = document.getElementById('riga_scelta');
+            const select = $('riga_scelta');
+            const precedente = select.value;
+            const disponibili = righeDisponibili();
             select.innerHTML = '';
-            const righe = lottiPerPosizione[posizioneId] || [];
-            if (!posizioneId) {
-                select.innerHTML = '<option value="">Scegli prima la posizione di partenza</option>';
+            function aggiungiOpzione(valore, testo) {
+                const opzione = document.createElement('option');
+                opzione.value = valore;
+                opzione.textContent = testo;
+                select.appendChild(opzione);
+            }
+            if (!$('posizione_partenza').value) {
+                aggiungiOpzione('', 'Scegli prima la posizione di partenza');
                 select.disabled = true;
-            } else if (righe.length === 0) {
-                select.innerHTML = '<option value="">Nessun materiale disponibile qui</option>';
+            } else if (!disponibili.length) {
+                aggiungiOpzione('', lista.length ? 'Hai già aggiunto tutto quello che c\'è qui' : 'Nessun materiale disponibile qui');
                 select.disabled = true;
             } else {
                 select.disabled = false;
-                righe.forEach(function (riga, indice) {
-                    const opzione = document.createElement('option');
-                    opzione.value = indice;
-                    let etichetta = riga.materiale;
-                    if (riga.condizione) etichetta += ' — ' + riga.condizione;
-                    if (riga.note) etichetta += ' (' + riga.note + ')';
-                    etichetta += ' — ' + riga.quantita_disponibile + ' ' + riga.unita_misura;
-                    opzione.textContent = etichetta;
-                    select.appendChild(opzione);
+                aggiungiOpzione('', 'Seleziona un materiale');
+                disponibili.forEach(function (x) {
+                    let etichetta = x.riga.materiale;
+                    if (x.riga.condizione) etichetta += ' — ' + x.riga.condizione;
+                    if (x.riga.note) etichetta += ' (' + x.riga.note + ')';
+                    etichetta += ' — ' + x.rimasta + ' ' + x.riga.unita_misura;
+                    aggiungiOpzione(String(x.indice), etichetta);
                 });
+                if (precedente !== '' && disponibili.some(x => String(x.indice) === precedente)) select.value = precedente;
             }
             aggiornaQuantita();
         }
 
         function aggiornaQuantita() {
-            const riga = rigaCorrente();
-            const campoQuantita = document.getElementById('quantita_usata');
-            const infoLotto = document.getElementById('info_lotto');
-            const campoCondizione = document.getElementById('condizione_id');
-            const campoNote = document.getElementById('note');
-            if (riga) {
-                document.getElementById('lotto_id').value = riga.lotto_id;
-                document.getElementById('condizione_partenza_id').value = riga.condizione_id || '';
-                document.getElementById('nota_partenza').value = riga.note || '';
-                campoQuantita.value = riga.quantita_disponibile;
-                campoQuantita.max = riga.quantita_disponibile;
-                document.getElementById('info_bolla').textContent = riga.bolla;
-                document.getElementById('info_unita').textContent = riga.unita_misura;
-                document.getElementById('info_disponibile').textContent = riga.quantita_disponibile + ' ' + riga.unita_misura;
-                infoLotto.hidden = false;
-                campoCondizione.value = riga.condizione_id || '';
-                campoNote.value = riga.note || '';
-                valoriOriginali.condizione_id = campoCondizione.value;
-                valoriOriginali.note = campoNote.value;
-                campoCondizione.classList.remove('modificato');
-                campoNote.classList.remove('modificato');
+            const scelta = rigaCorrente();
+            const campoQuantita = $('quantita_usata');
+            const campoCondizione = $('condizione_id');
+            const campoNote = $('note');
+            nascondiErroreRiga();
+            if (scelta) {
+                campoQuantita.value = scelta.rimasta;
+                campoQuantita.max = scelta.rimasta;
+                $('info_bolla').textContent = scelta.riga.bolla;
+                $('info_unita').textContent = scelta.riga.unita_misura;
+                $('info_disponibile').textContent = scelta.rimasta + ' ' + scelta.riga.unita_misura;
+                $('info_lotto').hidden = false;
+                campoCondizione.value = scelta.riga.condizione_id || '';
+                campoNote.value = scelta.riga.note || '';
             } else {
-                document.getElementById('lotto_id').value = '';
-                document.getElementById('condizione_partenza_id').value = '';
-                document.getElementById('nota_partenza').value = '';
                 campoQuantita.value = '';
                 campoQuantita.removeAttribute('max');
-                infoLotto.hidden = true;
+                $('info_lotto').hidden = true;
                 campoCondizione.value = '';
                 campoNote.value = '';
-                campoCondizione.classList.remove('modificato');
-                campoNote.classList.remove('modificato');
             }
-            aggiornaRiepilogo();
+            valoriOriginali.condizione_id = campoCondizione.value;
+            valoriOriginali.note = campoNote.value;
+            campoCondizione.classList.remove('modificato');
+            campoNote.classList.remove('modificato');
         }
 
         function segnalaModifica(campoId) {
-            const campo = document.getElementById(campoId);
-            const modificato = campo.value !== valoriOriginali[campoId];
-            campo.classList.toggle('modificato', modificato);
+            const campo = $(campoId);
+            campo.classList.toggle('modificato', campo.value !== valoriOriginali[campoId]);
+        }
+
+        function aggiungiRiga() {
+            nascondiErroreRiga();
+            if (!$('posizione_partenza').value) {
+                mostraErroreRiga('Scegli prima da dove prelevi.');
+                $('posizione_partenza').focus();
+                return false;
+            }
+            const scelta = rigaCorrente();
+            if (!scelta) {
+                mostraErroreRiga('Scegli un materiale da aggiungere alla lista.');
+                $('riga_scelta').focus();
+                return false;
+            }
+            const quantita = arrotonda(parseFloat($('quantita_usata').value));
+            if (!(quantita > 0)) {
+                mostraErroreRiga('Scrivi una quantità maggiore di zero.');
+                $('quantita_usata').focus();
+                return false;
+            }
+            if (quantita > scelta.rimasta + 1e-9) {
+                const inLista = giaInLista(chiaveRiga(scelta.riga));
+                mostraErroreRiga('Di ' + scelta.riga.materiale + ' ' + (inLista ? 'ne restano disponibili solo ' : 'sono disponibili solo ') + scelta.rimasta + ' ' + scelta.riga.unita_misura + (inLista ? ' (il resto è già nella lista)' : '') + '.');
+                $('quantita_usata').focus();
+                return false;
+            }
+            const condizione = $('condizione_id').value;
+            const note = $('note').value;
+            if (nonCambiaNulla(scelta.riga.condizione_id, scelta.riga.note, condizione === '' ? null : Number(condizione), note || null)) {
+                mostraErroreRiga('Partenza e arrivo coincidono: per questo materiale cambia condizione o note, altrimenti non c\'è nulla da registrare.');
+                return false;
+            }
+            lista.push({
+                chiave: chiaveRiga(scelta.riga),
+                lotto_id: scelta.riga.lotto_id,
+                quantita_usata: arrotonda(quantita),
+                condizione_id: condizione === '' ? null : Number(condizione),
+                note: note || null,
+                condizione_partenza_id: scelta.riga.condizione_id,
+                nota_partenza: scelta.riga.note,
+                materiale: scelta.riga.materiale,
+                unita_misura: scelta.riga.unita_misura,
+                condizione_nome: condizione === '' ? '' : nomeSelezionato('condizione_id')
+            });
+            $('riga_scelta').value = '';
+            aggiornaMateriali();
+            aggiornaLista();
+            if (!$('riga_scelta').disabled) $('riga_scelta').focus();
+            return true;
+        }
+
+        // Con la stessa posizione di partenza e arrivo serve almeno un cambiamento.
+        function nonCambiaNulla(condizionePartenza, notaPartenza, condizioneArrivo, notaArrivo) {
+            return $('posizione_arrivo').value !== '' && $('posizione_arrivo').value === $('posizione_partenza').value
+                && (condizionePartenza || null) === (condizioneArrivo || null) && (notaPartenza || null) === (notaArrivo || null);
+        }
+
+        function togliRiga(indice) {
+            lista.splice(indice, 1);
+            aggiornaMateriali();
+            aggiornaLista();
+            // la tabella e' stata ridisegnata: il focus passa al "Togli" successivo o, se non ce ne sono, ad "Aggiungi"
+            const successivo = document.querySelectorAll('#righe-lista button')[Math.min(indice, lista.length - 1)];
+            (successivo || $('btn-aggiungi')).focus();
+        }
+
+        function svuotaLista() {
+            lista = [];
+            aggiornaMateriali();
+            aggiornaLista();
+            $('btn-aggiungi').focus();
+        }
+
+        function aggiornaLista() {
+            const corpo = $('righe-lista');
+            corpo.textContent = '';
+            lista.forEach(function (voce, indice) {
+                const riga = document.createElement('tr');
+                [voce.materiale, String(voce.quantita_usata), voce.unita_misura, voce.condizione_nome || '—', voce.note || '—'].forEach(function (testo, colonna) {
+                    const cella = document.createElement('td');
+                    if (colonna === 1) cella.className = 'num';
+                    cella.textContent = testo;
+                    riga.appendChild(cella);
+                });
+                const azioni = document.createElement('td');
+                const togli = document.createElement('button');
+                togli.type = 'button';
+                togli.className = 'btn-secondario';
+                togli.textContent = 'Togli';
+                togli.setAttribute('aria-label', 'Togli ' + voce.materiale + ' dalla lista');
+                togli.addEventListener('click', function () { togliRiga(indice); });
+                azioni.appendChild(togli);
+                riga.appendChild(azioni);
+                corpo.appendChild(riga);
+            });
+            const n = lista.length;
+            $('lista-vuota').hidden = n > 0;
+            $('blocco-lista').hidden = n === 0;
+            $('conteggio-lista').hidden = n === 0;
+            $('conteggio-lista').textContent = n;
+            $('btn-registra').textContent = n > 1 ? 'Registra ' + n + ' spostamenti' : 'Registra movimento';
             aggiornaRiepilogo();
         }
 
         function aggiornaRiepilogo() {
-            const riepilogo = document.getElementById('riepilogo');
-            const riga = rigaCorrente();
-            const quantita = document.getElementById('quantita_usata').value;
-            if (!riga || !quantita || !document.getElementById('posizione_arrivo').value) { riepilogo.hidden = true; return; }
-            const partenza = nomeSelezionato('posizione_partenza');
-            const arrivo = nomeSelezionato('posizione_arrivo');
-            let testo = 'Stai spostando ' + quantita + ' ' + riga.unita_misura + ' di ' + riga.materiale + ' da ' + partenza + ' a ' + arrivo + '.';
-            const invariato = !document.getElementById('condizione_id').classList.contains('modificato')
-                && !document.getElementById('note').classList.contains('modificato');
-            if (document.getElementById('posizione_partenza').value === document.getElementById('posizione_arrivo').value && invariato) {
-                testo += ' Partenza e arrivo coincidono: cambia condizione o note, altrimenti non c\'è nulla da registrare.';
+            const riepilogo = $('riepilogo');
+            const arrivo = $('posizione_arrivo').value;
+            if (!lista.length || !arrivo) { riepilogo.hidden = true; return; }
+            let testo = 'Stai spostando ' + (lista.length === 1 ? '1 materiale' : lista.length + ' materiali')
+                + ' da ' + nomeSelezionato('posizione_partenza') + ' a ' + nomeSelezionato('posizione_arrivo') + '.';
+            if (lista.some(v => nonCambiaNulla(v.condizione_partenza_id, v.nota_partenza, v.condizione_id, v.note))) {
+                testo += ' Partenza e arrivo coincidono: i materiali senza cambio di condizione o note non hanno nulla da registrare.';
             }
             riepilogo.textContent = testo;
             riepilogo.hidden = false;
         }
+
+        ['quantita_usata', 'note'].forEach(function (id) {
+            $(id).addEventListener('keydown', function (evento) {
+                if (evento.key === 'Enter') { evento.preventDefault(); aggiungiRiga(); }
+            });
+        });
+
+        $('form-movimento').addEventListener('submit', function (evento) {
+            nascondiErroreRiga();
+            if (rigaCorrente()) {
+                if (lista.length === 0) {
+                    // un solo materiale: basta sceglierlo e premere Registra
+                    if (!aggiungiRiga()) { evento.preventDefault(); return; }
+                } else {
+                    evento.preventDefault();
+                    mostraErroreRiga('Hai scelto un materiale ma non l\'hai ancora aggiunto alla lista: premi "Aggiungi alla lista", oppure togli la scelta.');
+                    $('btn-aggiungi').focus();
+                    return;
+                }
+            }
+            if (lista.length === 0) {
+                evento.preventDefault();
+                mostraErroreRiga('Aggiungi almeno un materiale alla lista prima di registrare.');
+                return;
+            }
+            $('righe').value = JSON.stringify(lista);
+            $('btn-registra').disabled = true;
+        });
+
+        (function inizializza() {
+            // dopo un errore del server si ritrova tutto quello che si era preparato
+            if (statoIniziale.partenza) { $('posizione_partenza').value = statoIniziale.partenza; }
+            partenzaCorrente = $('posizione_partenza').value;
+            if (statoIniziale.arrivo) { $('posizione_arrivo').value = statoIniziale.arrivo; }
+            lista = (statoIniziale.righe || []).filter(v => v && Number.isFinite(v.lotto_id) && v.quantita_usata > 0).map(function (v) {
+                return {
+                    chiave: chiaveRiga({ lotto_id: v.lotto_id, condizione_id: v.condizione_partenza_id, note: v.nota_partenza }),
+                    lotto_id: v.lotto_id,
+                    quantita_usata: v.quantita_usata,
+                    condizione_id: v.condizione_id,
+                    note: v.note,
+                    condizione_partenza_id: v.condizione_partenza_id,
+                    nota_partenza: v.nota_partenza,
+                    materiale: String(v.materiale || ''),
+                    unita_misura: String(v.unita_misura || ''),
+                    condizione_nome: String(v.condizione_nome || '')
+                };
+            });
+            aggiornaMateriali();
+            aggiornaLista();
+        })();
     </script>
 </body>
 </html>

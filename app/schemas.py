@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
 
@@ -133,12 +133,22 @@ class MovimentoCreate(BaseModel):
     lotto_id: int
     posizione_partenza_id: Optional[int] = None
     posizione_arrivo_id: int
-    quantita_usata: float
+    quantita_usata: float = Field(allow_inf_nan=False)
     data_movimento: Optional[datetime] = None
     note: Optional[str] = None
     condizione_id: Optional[int] = None
     nota_partenza: Optional[str] = None
     condizione_partenza_id: Optional[int] = None
+
+class RigaMovimentoForm(BaseModel):
+    """Una riga dell'elenco 'materiali da spostare' del form Registra movimento
+    (partenza e arrivo sono uguali per tutte le righe e arrivano a parte)."""
+    lotto_id: int
+    quantita_usata: float = Field(allow_inf_nan=False)
+    condizione_id: Optional[int] = None
+    note: Optional[str] = None
+    condizione_partenza_id: Optional[int] = None
+    nota_partenza: Optional[str] = None
 
 class MovimentoRead(MovimentoCreate):
     model_config = ConfigDict(from_attributes=True)
