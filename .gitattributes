@@ -1,0 +1,3 @@
+# Il prompt dei comandi di Windows si confonde con i file .bat che finiscono con LF invece di CRLF:
+# forzo CRLF anche nello ZIP scaricato da GitHub.
+*.bat text eol=crlf

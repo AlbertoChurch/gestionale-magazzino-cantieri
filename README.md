@@ -10,8 +10,27 @@ per un solo PC (il server ascolta solo su `127.0.0.1`): non esporlo su internet.
 
 ## Provalo in pochi minuti (con dati di esempio)
 
+### Su Windows, senza riga di comando
+
+1. Installa [Python 3.14](https://www.python.org/downloads/) (avanti-avanti-fine),
+   **spuntando "Add python.exe to PATH"** nella prima schermata
+   dell'installazione. Serve anche internet.
+2. Scarica il progetto: in alto in questa pagina GitHub clicca **Code → Download
+   ZIP**, poi estrai la cartella (tasto destro sullo ZIP → "Estrai tutto").
+3. Apri la cartella estratta e fai doppio clic su **`AVVIA_DEMO.bat`**.
+   - Se Windows mostra "Windows ha protetto il PC": clicca **Maggiori
+     informazioni → Esegui comunque** (succede con ogni file scaricato da internet).
+   - La prima volta ci mette qualche minuto (prepara tutto da solo); poi si apre
+     il browser su <http://127.0.0.1:8000>.
+4. Accedi con le credenziali qui sotto.
+
+Per fermarlo chiudi la finestra nera. Per riaprirlo, di nuovo doppio clic su
+`AVVIA_DEMO.bat`: parte in pochi secondi e ritrovi i dati come li avevi lasciati.
+
+### Da riga di comando (con Git)
+
 Serve [Python 3.14](https://www.python.org/downloads/) (la versione con cui è
-sviluppato e provato). Da PowerShell:
+sviluppato e provato) e Git. Da PowerShell:
 
 ```powershell
 git clone https://github.com/AlbertoChurch/gestionale-magazzino-cantieri.git
@@ -23,21 +42,34 @@ python deploy/dati_demo.py
 uvicorn app.main:app
 ```
 
-Poi apri <http://127.0.0.1:8000> e accedi con:
+Poi apri <http://127.0.0.1:8000>. Se chiudi PowerShell, per riavviarlo basta
+entrare nella cartella, rifare `.venv\Scripts\Activate.ps1` e
+`uvicorn app.main:app`. Su macOS/Linux al posto dell'attivazione si usa
+`source .venv/bin/activate` (non l'ho provato lì). Se PowerShell rifiuta
+l'attivazione, lancia prima `Set-ExecutionPolicy -Scope Process Bypass`.
+
+### Credenziali
 
 | Ruolo | Email | Password |
 |---|---|---|
 | Amministratore | `admin@example.com` | `demo1234` |
 | Operatore | `operatore@example.com` | `demo1234` |
 
-(Su macOS/Linux al posto di `.venv\Scripts\Activate.ps1` si usa
-`source .venv/bin/activate`. Se PowerShell rifiuta l'attivazione, lancia prima
-`Set-ExecutionPolicy -Scope Process Bypass`.)
-
 I dati sono inventati: un magazzino, tre cantieri, tre fornitori con i loro
 materiali, tre bolle già arrivate e qualche spostamento già fatto. Per
-ricominciare da zero cancella `gestionale.db` e rilancia `deploy/dati_demo.py`
-(lo script si rifiuta di girare su un database che contiene già dei dati).
+ricominciare da zero cancella `gestionale.db` e rilancia (`AVVIA_DEMO.bat`
+oppure `python deploy/dati_demo.py`): non aggiunge mai dati di esempio a un
+database che contiene già dei dati.
+
+### Se qualcosa non va
+
+- **"python non è riconosciuto"**, o si apre il Microsoft Store: Python non è
+  installato oppure manca la spunta "Add python.exe to PATH". Reinstallalo
+  spuntandola e rilancia.
+- **Errore di porta occupata**: è già aperta un'altra finestra del gestionale.
+  Chiudila e riprova.
+- **Chiede di nuovo il login dopo averlo riavviato**: è normale, le sessioni non
+  sopravvivono al riavvio.
 
 ## Cosa puoi provare
 
