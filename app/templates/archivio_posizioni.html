@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Archivio - Posizioni chiuse</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -8,24 +10,28 @@
     {% include "_nav.html" %}
     <main>
         <h1>Cantieri/magazzini chiusi</h1>
-        <div class="card">
+        <div class="card {{ 'card-tabella' if posizioni else '' }}">
+        {% if posizioni %}
         <table>
-            <tr><th>Nome</th><th>Tipo</th><th>Indirizzo</th><th>Aperto dal</th><th>Chiuso il</th><th></th></tr>
+            <tr><th>Nome</th><th>Tipo</th><th>Indirizzo</th><th>Aperto dal</th><th>Chiuso il</th><th><span class="sr-only">Azioni</span></th></tr>
             {% for posizione in posizioni %}
             <tr>
-                <td>{{ posizione.nome }}</td>
+                <td><strong>{{ posizione.nome }}</strong></td>
                 <td>{{ posizione.tipo_posizione.nome }}</td>
                 <td>{{ posizione.indirizzo or "—" }}</td>
-                <td>{{ posizione.data_apertura or "—" }}</td>
-                <td>{{ posizione.data_chiusura }}</td>
+                <td>{{ posizione.data_apertura.strftime('%d/%m/%Y') if posizione.data_apertura else "—" }}</td>
+                <td>{{ posizione.data_chiusura.strftime('%d/%m/%Y') if posizione.data_chiusura else "—" }}</td>
                 <td>
-                    <form method="post" action="/posizioni/{{ posizione.id }}/riapri" style="margin:0;">
-                        <button type="submit">Riapri</button>
+                    <form method="post" action="/posizioni/{{ posizione.id }}/riapri">
+                        <button type="submit" class="btn-secondario">Riapri</button>
                     </form>
                 </td>
             </tr>
             {% endfor %}
         </table>
+        {% else %}
+        <p class="vuoto"><strong>Nessuna posizione chiusa</strong>Quando chiudi un cantiere o un magazzino da <a href="/posizioni-elenco">Posizioni</a>, lo ritrovi qui e puoi riaprirlo.</p>
+        {% endif %}
         </div>
     </main>
 </body>

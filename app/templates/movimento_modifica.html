@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Modifica movimento</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -9,28 +11,34 @@
     <main>
         <h1>Modifica movimento</h1>
         {% if errore %}
-        <p class="errore">{{ errore }}</p>
+        <p class="errore" role="alert">{{ errore }}</p>
         {% endif %}
         <div class="card">
-            <p><strong>Materiale:</strong> {{ movimento.lotto.materiale.nome }}</p>
-            <p><strong>Da:</strong> {{ movimento.posizione_partenza.nome if movimento.posizione_partenza else "—" }}
-               <strong>A:</strong> {{ movimento.posizione_arrivo.nome }}</p>
-            <p style="color:var(--muted); font-size:0.9em;">Posizioni e lotto non sono modificabili qui: cambiarli potrebbe rendere incoerenti i movimenti successivi. Elimina e ricrea il movimento se serve spostarlo altrove.</p>
+            <dl class="riquadro-info">
+                <div><dt>Materiale</dt><dd>{{ movimento.lotto.materiale.nome }}</dd></div>
+                <div><dt>Da</dt><dd>{{ movimento.posizione_partenza.nome if movimento.posizione_partenza else "—" }}</dd></div>
+                <div><dt>A</dt><dd>{{ movimento.posizione_arrivo.nome }}</dd></div>
+            </dl>
+            <p class="meta">Posizioni e lotto non sono modificabili qui: cambiarli potrebbe rendere incoerenti i movimenti successivi. Elimina e ricrea il movimento se serve spostarlo altrove.</p>
 
             <form method="post" action="/movimenti/{{ movimento.id }}/modifica">
-                <label>Quantità <input type="number" step="0.01" name="quantita_usata" value="{{ movimento.quantita_usata }}"></label>
-                <label>Condizione all'arrivo
-                    <select name="condizione_id">
-                        <option value="">-- non specificata --</option>
-                        {% for condizione in condizioni %}
-                        <option value="{{ condizione.id }}" {% if movimento.condizione_id == condizione.id %}selected{% endif %}>{{ condizione.nome }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label>Note <input type="text" name="note" value="{{ movimento.note or '' }}"></label>
-                <label>Data <input type="datetime-local" name="data_movimento" value="{{ movimento.data_movimento.strftime('%Y-%m-%dT%H:%M') if movimento.data_movimento else '' }}"></label>
-                <button type="submit">Salva</button>
-                <a href="/storico"><button type="button" class="btn-secondario">Annulla</button></a>
+                <div class="form-griglia">
+                    <label>Quantità <input type="number" step="0.01" min="0.01" inputmode="decimal" name="quantita_usata" value="{{ movimento.quantita_usata }}" required autofocus></label>
+                    <label>Data <input type="datetime-local" name="data_movimento" value="{{ movimento.data_movimento.strftime('%Y-%m-%dT%H:%M') if movimento.data_movimento else '' }}"></label>
+                    <label>Condizione all'arrivo
+                        <select name="condizione_id">
+                            <option value="">Non specificata</option>
+                            {% for condizione in condizioni %}
+                            <option value="{{ condizione.id }}" {% if movimento.condizione_id == condizione.id %}selected{% endif %}>{{ condizione.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>Note <input type="text" name="note" value="{{ movimento.note or '' }}"></label>
+                </div>
+                <div class="barra-azioni">
+                    <button type="submit">Salva modifiche</button>
+                    <a href="/storico" class="btn-secondario grande">Annulla</a>
+                </div>
             </form>
         </div>
     </main>

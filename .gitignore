@@ -8,3 +8,8 @@ appunti progetto gestionale/
 .claude/
 CLAUDE.md
 _ponytail_test/
+# Backup del database (contengono dati reali) e file di lavoro locali di Impeccable
+gestionale.db.bak*
+.impeccable/review/
+.impeccable/config.local.json
+.impeccable/hook.cache.json

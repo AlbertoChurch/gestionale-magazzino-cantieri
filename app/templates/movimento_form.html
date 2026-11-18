@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nuovo movimento</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -9,60 +11,79 @@
     <main>
         <h1>Registra movimento</h1>
         {% if errore %}
-        <p class="errore">{{ errore }}</p>
+        <p class="errore" role="alert">{{ errore }}</p>
         {% endif %}
         <div class="card">
         <form method="post" action="/movimenti/nuovo">
-            <label>Da dove prelevi
-                <select id="posizione_partenza" name="posizione_partenza_id" onchange="aggiornaMateriali();">
-                    <option value="">-- seleziona una posizione --</option>
-                    {% for posizione in posizioni %}
-                    <option value="{{ posizione.id }}">{{ posizione.nome }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label>Materiale disponibile lì
-                <select id="riga_scelta" onchange="aggiornaQuantita()">
-                    <option value="">-- scegli prima la posizione di partenza --</option>
-                </select>
-            </label>
-            <input type="hidden" id="lotto_id" name="lotto_id">
-            <input type="hidden" id="condizione_partenza_id" name="condizione_partenza_id">
-            <input type="hidden" id="nota_partenza" name="nota_partenza">
+            <section class="passo">
+                <h2 class="passo-titolo"><span class="passo-numero">1</span>Cosa sposti</h2>
+                <div class="form-griglia">
+                    <label>Da dove prelevi
+                        <select id="posizione_partenza" name="posizione_partenza_id" onchange="aggiornaMateriali();" required autofocus>
+                            <option value="">Seleziona una posizione</option>
+                            {% for posizione in posizioni %}
+                            <option value="{{ posizione.id }}">{{ posizione.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>Materiale disponibile lì
+                        <select id="riga_scelta" onchange="aggiornaQuantita()" required disabled>
+                            <option value="">Scegli prima la posizione di partenza</option>
+                        </select>
+                    </label>
+                </div>
+                <input type="hidden" id="lotto_id" name="lotto_id">
+                <input type="hidden" id="condizione_partenza_id" name="condizione_partenza_id">
+                <input type="hidden" id="nota_partenza" name="nota_partenza">
 
-            <div class="card" id="info_lotto" style="display:none; background:var(--bg);">
-                <p><strong>Bolla:</strong> <span id="info_bolla"></span></p>
-                <p><strong>Unità di misura:</strong> <span id="info_unita"></span></p>
-                <p><strong>Disponibile qui:</strong> <span id="info_disponibile"></span></p>
-            </div>
+                <dl class="riquadro-info" id="info_lotto" hidden>
+                    <div><dt>Bolla</dt><dd id="info_bolla"></dd></div>
+                    <div><dt>Unità di misura</dt><dd id="info_unita"></dd></div>
+                    <div><dt>Disponibile qui</dt><dd id="info_disponibile"></dd></div>
+                </dl>
+            </section>
 
-            <label>Verso
-                <select id="posizione_arrivo" name="posizione_arrivo_id">
-                    {% for posizione in posizioni %}
-                    <option value="{{ posizione.id }}">{{ posizione.nome }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label>Quantità
-                <input type="number" step="0.01" min="0.01" id="quantita_usata" name="quantita_usata" required>
-            </label>
-            <label>Condizione all'arrivo
-                <select id="condizione_id" name="condizione_id" onchange="segnalaModifica('condizione_id')">
-                    <option value="">-- non specificata --</option>
-                    {% for condizione in condizioni %}
-                    <option value="{{ condizione.id }}">{{ condizione.nome }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label>Note
-                <input type="text" id="note" name="note" oninput="segnalaModifica('note')">
-            </label>
-            <p style="color:var(--muted); font-size:0.9em;">
-                Condizione e note sono precompilate con quelle del materiale prelevato.
-                Se le cambi, il campo diventa <span class="modificato" style="padding:0 .3em;">giallo</span>:
-                significa che allo scarico verrà creata una riga di giacenza a sé, distinta da quella di partenza.
-            </p>
-            <button type="submit">Registra</button>
+            <section class="passo">
+                <h2 class="passo-titolo"><span class="passo-numero">2</span>Dove va e quanto</h2>
+                <div class="form-griglia">
+                    <label>Verso
+                        <select id="posizione_arrivo" name="posizione_arrivo_id" onchange="aggiornaRiepilogo()" required>
+                            <option value="">Seleziona una posizione</option>
+                            {% for posizione in posizioni %}
+                            <option value="{{ posizione.id }}">{{ posizione.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>Quantità
+                        <input type="number" step="0.01" min="0.01" inputmode="decimal" id="quantita_usata" name="quantita_usata" oninput="aggiornaRiepilogo()" required>
+                    </label>
+                </div>
+            </section>
+
+            <section class="passo">
+                <h2 class="passo-titolo"><span class="passo-numero">3</span>Condizione e note</h2>
+                <div class="form-griglia">
+                    <label>Condizione all'arrivo
+                        <select id="condizione_id" name="condizione_id" onchange="segnalaModifica('condizione_id')">
+                            <option value="">Non specificata</option>
+                            {% for condizione in condizioni %}
+                            <option value="{{ condizione.id }}">{{ condizione.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>Note
+                        <input type="text" id="note" name="note" oninput="segnalaModifica('note')">
+                    </label>
+                </div>
+                <p class="nota-giallo">
+                    Condizione e note partono uguali a quelle del materiale prelevato.
+                    Se le cambi, il campo diventa <span class="modificato">giallo</span>:
+                    all'arrivo verrà creata una riga di giacenza a sé, distinta da quella di partenza.
+                </p>
+            </section>
+
+            <p class="riepilogo" id="riepilogo" role="status" hidden></p>
+            <button type="submit">Registra movimento</button>
         </form>
         </div>
     </main>
@@ -70,14 +91,30 @@
         const lottiPerPosizione = {{ lotti_per_posizione | tojson }};
         let valoriOriginali = { condizione_id: "", note: "" };
 
+        function rigaCorrente() {
+            const posizioneId = document.getElementById('posizione_partenza').value;
+            const indice = document.getElementById('riga_scelta').value;
+            return (lottiPerPosizione[posizioneId] || [])[indice];
+        }
+
+        function nomeSelezionato(id) {
+            const select = document.getElementById(id);
+            return select.options[select.selectedIndex] ? select.options[select.selectedIndex].textContent : '';
+        }
+
         function aggiornaMateriali() {
             const posizioneId = document.getElementById('posizione_partenza').value;
             const select = document.getElementById('riga_scelta');
             select.innerHTML = '';
             const righe = lottiPerPosizione[posizioneId] || [];
-            if (righe.length === 0) {
-                select.innerHTML = '<option value="">-- nessun materiale disponibile qui --</option>';
+            if (!posizioneId) {
+                select.innerHTML = '<option value="">Scegli prima la posizione di partenza</option>';
+                select.disabled = true;
+            } else if (righe.length === 0) {
+                select.innerHTML = '<option value="">Nessun materiale disponibile qui</option>';
+                select.disabled = true;
             } else {
+                select.disabled = false;
                 righe.forEach(function (riga, indice) {
                     const opzione = document.createElement('option');
                     opzione.value = indice;
@@ -93,10 +130,7 @@
         }
 
         function aggiornaQuantita() {
-            const posizioneId = document.getElementById('posizione_partenza').value;
-            const indice = document.getElementById('riga_scelta').value;
-            const righe = lottiPerPosizione[posizioneId] || [];
-            const riga = righe[indice];
+            const riga = rigaCorrente();
             const campoQuantita = document.getElementById('quantita_usata');
             const infoLotto = document.getElementById('info_lotto');
             const campoCondizione = document.getElementById('condizione_id');
@@ -110,7 +144,7 @@
                 document.getElementById('info_bolla').textContent = riga.bolla;
                 document.getElementById('info_unita').textContent = riga.unita_misura;
                 document.getElementById('info_disponibile').textContent = riga.quantita_disponibile + ' ' + riga.unita_misura;
-                infoLotto.style.display = 'block';
+                infoLotto.hidden = false;
                 campoCondizione.value = riga.condizione_id || '';
                 campoNote.value = riga.note || '';
                 valoriOriginali.condizione_id = campoCondizione.value;
@@ -123,18 +157,37 @@
                 document.getElementById('nota_partenza').value = '';
                 campoQuantita.value = '';
                 campoQuantita.removeAttribute('max');
-                infoLotto.style.display = 'none';
+                infoLotto.hidden = true;
                 campoCondizione.value = '';
                 campoNote.value = '';
                 campoCondizione.classList.remove('modificato');
                 campoNote.classList.remove('modificato');
             }
+            aggiornaRiepilogo();
         }
 
         function segnalaModifica(campoId) {
             const campo = document.getElementById(campoId);
             const modificato = campo.value !== valoriOriginali[campoId];
             campo.classList.toggle('modificato', modificato);
+            aggiornaRiepilogo();
+        }
+
+        function aggiornaRiepilogo() {
+            const riepilogo = document.getElementById('riepilogo');
+            const riga = rigaCorrente();
+            const quantita = document.getElementById('quantita_usata').value;
+            if (!riga || !quantita || !document.getElementById('posizione_arrivo').value) { riepilogo.hidden = true; return; }
+            const partenza = nomeSelezionato('posizione_partenza');
+            const arrivo = nomeSelezionato('posizione_arrivo');
+            let testo = 'Stai spostando ' + quantita + ' ' + riga.unita_misura + ' di ' + riga.materiale + ' da ' + partenza + ' a ' + arrivo + '.';
+            const invariato = !document.getElementById('condizione_id').classList.contains('modificato')
+                && !document.getElementById('note').classList.contains('modificato');
+            if (document.getElementById('posizione_partenza').value === document.getElementById('posizione_arrivo').value && invariato) {
+                testo += ' Partenza e arrivo coincidono: cambia condizione o note, altrimenti non c\'è nulla da registrare.';
+            }
+            riepilogo.textContent = testo;
+            riepilogo.hidden = false;
         }
     </script>
 </body>

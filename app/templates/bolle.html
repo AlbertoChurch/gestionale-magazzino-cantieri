@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bolle</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -8,41 +10,32 @@
     {% include "_nav.html" %}
     <main>
         <h1>Bolle</h1>
-        <div class="card">
-            <form method="get" action="/bolle-elenco">
-                <label>Filtra per anno
+        <div class="card filtri-storico">
+            <form method="get" action="/bolle-elenco" class="contenuti">
+                <label>Anno
                     <select name="anno" onchange="this.form.submit()">
-                        <option value="">-- tutti gli anni (ultimi 12 mesi) --</option>
+                        <option value="">Ultimi 12 mesi</option>
                         {% for anno in anni_disponibili %}
                         <option value="{{ anno }}" {% if anno_selezionato == anno|string %}selected{% endif %}>{{ anno }}</option>
                         {% endfor %}
                     </select>
                 </label>
             </form>
-            <label>Cerca (fornitore, numero, ordine, firmatario, materiale...)
-                <input type="text" id="ricerca-bolle" oninput="filtraBolle(this.value)" placeholder="scrivi per filtrare...">
+            <label>Cerca
+                <input type="search" id="ricerca-bolle" oninput="filtraBolle(this.value)" placeholder="fornitore, numero, ordine, firmatario, materiale..." {% if not bolle %}disabled{% endif %}>
             </label>
         </div>
 
-        <p id="nessun-risultato" style="display:none; color:var(--muted);">Nessuna bolla corrisponde alla ricerca.</p>
+        {% if not bolle %}
+        <div class="card">
+            <p class="vuoto"><strong>Nessuna bolla in questo periodo</strong>Le bolle compaiono qui dopo averle registrate da <a href="/bolle/nuovo">Inserimento materiale</a>.</p>
+        </div>
+        {% endif %}
+
+        <p id="nessun-risultato" class="vuoto" style="display:none;"><strong>Nessuna bolla corrisponde alla ricerca</strong>Prova con meno parole.</p>
 
         {% for bolla in bolle %}
-        <div class="card" id="bolla-{{ bolla.id }}" data-cerca="{{ (bolla.numero ~ ' ' ~ bolla.fornitore.nome ~ ' ' ~ (bolla.numero_ordine_riferimento or '') ~ ' ' ~ (bolla.firmatario or '') ~ ' ' ~ (bolla.operatori_scarico or '') ~ ' ' ~ (lotti_per_bolla.get(bolla.id, []) | map(attribute='materiale.nome') | join(' '))) | lower }}">
-            <h2><a href="/fornitori/{{ bolla.fornitore.id }}">{{ bolla.fornitore.nome }}</a> <span style="font-weight:400; color:var(--muted);">— bolla {{ bolla.numero }} — {{ bolla.data }}</span></h2>
-            <p>Ordine di riferimento: {{ bolla.numero_ordine_riferimento or "—" }}</p>
-            <p>Firmato/accettato da: {{ bolla.firmatario or "—" }} — Scaricato da: {{ bolla.operatori_scarico or "—" }}</p>
-            <table>
-                <tr><th>Prodotto/materiale</th><th>Quantità</th><th>Unità</th><th>Stato</th></tr>
-                {% for lotto in lotti_per_bolla.get(bolla.id, []) %}
-                <tr>
-                    <td>{{ lotto.materiale.nome }}</td>
-                    <td>{{ lotto.quantita_iniziale }}</td>
-                    <td>{{ lotto.materiale.unita_misura.nome }}</td>
-                    <td>{{ lotto.condizione_iniziale.nome if lotto.condizione_iniziale else "—" }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
+        {% include "_bolla_card.html" %}
         {% endfor %}
     </main>
     <script>

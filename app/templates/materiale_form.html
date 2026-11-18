@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ "Modifica materiale" if materiale else "Nuovo materiale" }}</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -9,38 +11,45 @@
     <main>
         <h1>{{ "Modifica materiale" if materiale else "Nuovo materiale" }}</h1>
         {% if errore %}
-        <p class="errore">{{ errore }}</p>
+        <p class="errore" role="alert">{{ errore }}</p>
         {% endif %}
         <div class="card">
-        <form method="post" action="{{ '/materiali/' ~ materiale.id ~ '/modifica' if materiale else '/materiali/nuovo' }}">
-            <label>Prodotto/materiale <input type="text" name="nome" value="{{ materiale.nome if materiale else '' }}"></label>
-            <label>Fornitore
-                <select name="fornitore_id">
-                    {% for fornitore in fornitori %}
-                    <option value="{{ fornitore.id }}" {% if materiale and materiale.fornitore_id == fornitore.id %}selected{% endif %}>{{ fornitore.nome }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label>Unità di misura
-                <select name="unita_misura_id">
-                    {% for u in unita %}
-                    <option value="{{ u.id }}" {% if materiale and materiale.unita_misura_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <button type="submit">{{ "Salva" if materiale else "Crea" }}</button>
-            {% if materiale %}<a href="/materiali/nuovo"><button type="button" class="btn-secondario">Annulla</button></a>{% endif %}
+        <form method="post" autocomplete="off" action="{{ '/materiali/' ~ materiale.id ~ '/modifica' if materiale else '/materiali/nuovo' }}">
+            <div class="form-griglia">
+                <label class="campo-largo">Prodotto/materiale <input type="text" name="nome" value="{{ materiale.nome if materiale else '' }}" required autofocus></label>
+                <label>Fornitore
+                    <select name="fornitore_id" required>
+                        {% if not materiale %}<option value="">Seleziona un fornitore</option>{% endif %}
+                        {% for fornitore in fornitori %}
+                        <option value="{{ fornitore.id }}" {% if materiale and materiale.fornitore_id == fornitore.id %}selected{% endif %}>{{ fornitore.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Unità di misura
+                    <select name="unita_misura_id" required>
+                        {% if not materiale %}<option value="">Seleziona un'unità</option>{% endif %}
+                        {% for u in unita %}
+                        <option value="{{ u.id }}" {% if materiale and materiale.unita_misura_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+            <div class="barra-azioni">
+                <button type="submit">{{ "Salva modifiche" if materiale else "Crea materiale" }}</button>
+                {% if materiale %}<a href="/materiali/nuovo" class="btn-secondario grande">Annulla</a>{% endif %}
+            </div>
         </form>
         </div>
 
         <div class="card">
             <h2>Materiali già inseriti</h2>
+            {% if materiali %}
             <ul class="lista-anagrafica">
                 {% for m in materiali %}
                 <li>
-                    <span class="nome-elemento">{{ m.nome }} — {{ m.fornitore.nome }}</span>
+                    <span class="nome-elemento"><strong>{{ m.nome }}</strong> <span class="meta">— {{ m.fornitore.nome }} · {{ m.unita_misura.nome }}</span></span>
                     <div class="azioni-riga">
-                        <a href="/materiali/{{ m.id }}/modifica"><button type="button" class="btn-secondario">Modifica</button></a>
+                        <a href="/materiali/{{ m.id }}/modifica" class="btn-secondario">Modifica</a>
                         <form method="post" action="/materiali/{{ m.id }}/elimina">
                             <button type="button" class="btn-secondario" onclick="chiediConferma(this)">Elimina</button>
                         </form>
@@ -48,6 +57,9 @@
                 </li>
                 {% endfor %}
             </ul>
+            {% else %}
+            <p class="vuoto"><strong>Nessun materiale ancora</strong>Compila il modulo qui sopra per aggiungere il primo.</p>
+            {% endif %}
         </div>
     </main>
 </body>

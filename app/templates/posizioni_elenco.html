@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Posizioni</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -8,42 +10,46 @@
     {% include "_nav.html" %}
     <main>
         <h1>Posizioni</h1>
+        <p class="meta sottotitolo">Magazzini e cantieri dove può trovarsi il materiale.</p>
 
         <div class="card">
             <h2>Nuova posizione</h2>
-            <form method="post" action="/posizioni/nuovo">
-                <label>Nome <input type="text" name="nome"></label>
-                <label>Indirizzo <input type="text" name="indirizzo"></label>
-                <label>Tipo
-                    <select name="tipo_posizione_id">
-                        {% for tipo in tipi %}
-                        <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <button type="submit">Crea</button>
+            <form method="post" action="/posizioni/nuovo" autocomplete="off">
+                <div class="form-griglia">
+                    <label>Nome <input type="text" name="nome" required></label>
+                    <label>Tipo
+                        <select name="tipo_posizione_id" required>
+                            {% for tipo in tipi %}
+                            <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="campo-largo">Indirizzo <input type="text" name="indirizzo"></label>
+                </div>
+                <button type="submit">Crea posizione</button>
             </form>
         </div>
 
         <div class="card">
             <h2>Posizioni aperte</h2>
+            {% if posizioni %}
             <ul class="lista-anagrafica">
                 {% for posizione in posizioni %}
                 <li class="riga-modificabile">
-                    <span class="nome-elemento">{{ posizione.nome }} — {{ posizione.tipo_posizione.nome }}{% if posizione.indirizzo %} — {{ posizione.indirizzo }}{% endif %}</span>
+                    <span class="nome-elemento"><strong>{{ posizione.nome }}</strong> <span class="meta">— {{ posizione.tipo_posizione.nome }}{% if posizione.indirizzo %} · {{ posizione.indirizzo }}{% endif %}</span></span>
                     <div class="azioni-riga">
                         <button type="button" class="btn-secondario" onclick="mostraModificaInline(this)">Modifica</button>
                         <form method="post" action="/posizioni/{{ posizione.id }}/chiudi">
-                            <button type="submit" class="btn-secondario">Chiudi</button>
+                            <button type="submit" class="btn-secondario" title="Non comparirà più nei nuovi movimenti. La ritrovi in Archivio e puoi riaprirla.">Chiudi</button>
                         </form>
                         <form method="post" action="/posizioni/{{ posizione.id }}/elimina">
                             <button type="button" class="btn-secondario" onclick="chiediConferma(this)">Elimina</button>
                         </form>
                     </div>
                     <form method="post" action="/posizioni/{{ posizione.id }}/modifica" class="form-modifica-inline" style="display:none;">
-                        <input type="text" name="nome" value="{{ posizione.nome }}" required>
-                        <input type="text" name="indirizzo" value="{{ posizione.indirizzo or '' }}" placeholder="indirizzo">
-                        <select name="tipo_posizione_id">
+                        <input type="text" name="nome" value="{{ posizione.nome }}" required aria-label="Nome">
+                        <input type="text" name="indirizzo" value="{{ posizione.indirizzo or '' }}" placeholder="Indirizzo" aria-label="Indirizzo">
+                        <select name="tipo_posizione_id" aria-label="Tipo">
                             {% for tipo in tipi %}
                             <option value="{{ tipo.id }}" {% if tipo.id == posizione.tipo_posizione_id %}selected{% endif %}>{{ tipo.nome }}</option>
                             {% endfor %}
@@ -54,6 +60,9 @@
                 </li>
                 {% endfor %}
             </ul>
+            {% else %}
+            <p class="vuoto"><strong>Nessuna posizione aperta</strong>Crea il primo magazzino o cantiere con il modulo qui sopra.</p>
+            {% endif %}
         </div>
     </main>
 </body>

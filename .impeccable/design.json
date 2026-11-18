@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-02T18:00:00Z",
+  "title": "Design System: Gestionale Magazzino",
+  "extensions": {
+    "colorMeta": {
+      "turf-green": { "role": "primary", "displayName": "Verde Erba", "canonical": "#1e7a3c", "tonalRamp": ["#0f3d1e", "#196632", "#238f46", "#2db85b", "#5bd784", "#99e6b2", "#c2f0d1", "#ebfaf0"] },
+      "turf-green-deep": { "role": "primary", "displayName": "Verde Erba Profondo", "canonical": "#145a2b", "tonalRamp": ["#0f3d1e", "#145a2b", "#196632", "#238f46", "#5bd784", "#99e6b2", "#c2f0d1", "#ebfaf0"] },
+      "turf-green-soft": { "role": "primary", "displayName": "Verde Erba Tenue", "canonical": "#d3e8d2", "tonalRamp": ["#0f3d1e", "#196632", "#238f46", "#5bd784", "#99e6b2", "#b5dbb3", "#d3e8d2", "#ebfaf0"] },
+      "field-bg": { "role": "neutral", "displayName": "Campo", "canonical": "#e9f1e4", "tonalRamp": ["#23321a", "#3b542c", "#53763d", "#6a974e", "#92b979", "#bbd3ab", "#d6e5cd", "#f1f6ee"] },
+      "surface": { "role": "neutral", "displayName": "Superficie", "canonical": "#f6faf3", "tonalRamp": ["#23321a", "#3b542c", "#53763d", "#6a974e", "#92b979", "#bbd3ab", "#e0ecda", "#f6faf3"] },
+      "ink": { "role": "neutral", "displayName": "Inchiostro", "canonical": "#16241a", "tonalRamp": ["#16241a", "#1d2f22", "#304f39", "#446f50", "#578e67", "#80b28e", "#b0cfb9", "#eff5f1"] },
+      "sidebar-bg": { "role": "neutral", "displayName": "Barra laterale", "canonical": "#0f2519", "tonalRamp": ["#0f2519", "#163625", "#1f4a31", "#255b3d", "#337f56", "#6ec495", "#a4dabd", "#edf8f2"] },
+      "danger": { "role": "secondary", "displayName": "Rosso Allarme", "canonical": "#c62828", "tonalRamp": ["#400d0d", "#6a1515", "#941e1e", "#bf2727", "#dd5555", "#ea9595", "#f2bfbf", "#fbeaea"] },
+      "warning": { "role": "secondary", "displayName": "Giallo Segnale", "canonical": "#fde047", "tonalRamp": ["#4c4001", "#7e6a01", "#b19502", "#e3bf02", "#fddd35", "#feea81", "#fef2b3", "#fffbe6"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Titolo pagina", "purpose": "h1 di ogni pagina." },
+      "title": { "displayName": "Titolo card", "purpose": "h2 delle card e marchio del login." },
+      "subtitle": { "displayName": "Sottotitolo", "purpose": "legend dei fieldset, titolo dei passi, voce vuota in evidenza." },
+      "body": { "displayName": "Testo", "purpose": "Testo corrente, input, celle." },
+      "body-small": { "displayName": "Testo piccolo", "purpose": "Etichette campi, testata tabelle, bottoni secondari, meta." },
+      "label": { "displayName": "Etichetta", "purpose": "dt dei pannelli dati e sezioni della barra laterale." }
+    },
+    "shadows": [
+      { "name": "card", "value": "0 1px 2px rgba(22,36,26,0.06), 0 2px 8px rgba(22,36,26,0.04)", "purpose": "Card a riposo." },
+      { "name": "pop", "value": "0 1px 3px rgba(14,26,18,0.2), 0 10px 28px rgba(14,26,18,0.22)", "purpose": "Toast e card del login." },
+      { "name": "field-focus", "value": "0 0 0 3px rgba(30,122,60,0.2)", "purpose": "Anello di focus dei campi di input." }
+    ],
+    "motion": [
+      { "name": "duration-quick", "value": "150ms", "purpose": "Hover, focus, colori, dissolvenza di pagina." },
+      { "name": "duration-fast", "value": "250ms", "purpose": "Chevron della barra, uscita del toast." },
+      { "name": "duration-medium", "value": "350ms", "purpose": "Apertura sottomenu, entrata del toast." },
+      { "name": "ease-smooth-out", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Unico easing per transform e movimento." },
+      { "name": "scale-press", "value": "0.96", "purpose": "Scala dei bottoni in pressione." },
+      { "name": "toast-enter", "value": "translateY(-16px) scale(0.97) blur(2px) -> none", "purpose": "Salita del toast." },
+      { "name": "reduced-motion", "value": "durations 0.01ms under prefers-reduced-motion: reduce; view transition only under no-preference", "purpose": "Guardia di accessibilita'." }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "860px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Azione principale della vista.",
+      "html": "<button class=\"ds-btn-primary\">Salva</button>",
+      "css": ".ds-btn-primary { font: inherit; font-size: 0.9375rem; font-weight: 600; background: #1e7a3c; color: #ffffff; border: 1px solid transparent; padding: 0 20px; min-height: 42px; border-radius: 7px; cursor: pointer; transition: background-color 150ms ease, transform 150ms cubic-bezier(0.22,1,0.36,1); } .ds-btn-primary:hover { background: #145a2b; } .ds-btn-primary:focus-visible { outline: 2px solid #1e7a3c; outline-offset: 2px; } .ds-btn-primary:active { transform: scale(0.96); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Azioni secondarie, anche come link (a.btn-secondario).",
+      "html": "<button class=\"ds-btn-secondary\">Modifica</button>",
+      "css": ".ds-btn-secondary { font: inherit; font-size: 0.875rem; font-weight: 600; background: #f6faf3; color: #16241a; border: 1px solid #b4c9ab; padding: 0 13px; min-height: 36px; border-radius: 7px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, transform 150ms cubic-bezier(0.22,1,0.36,1); } .ds-btn-secondary:hover { background: #e0ecda; border-color: #1e7a3c; } .ds-btn-secondary:focus-visible { outline: 2px solid #1e7a3c; outline-offset: 2px; } .ds-btn-secondary:active { transform: scale(0.96); }"
+    },
+    {
+      "name": "Confirm Delete Button",
+      "kind": "button",
+      "refersTo": "button-danger-confirm",
+      "description": "Secondo passo dell'eliminazione (Sei sicuro?).",
+      "html": "<button class=\"ds-btn-danger\">Sei sicuro?</button>",
+      "css": ".ds-btn-danger { font: inherit; font-size: 0.875rem; font-weight: 600; background: #c62828; color: #ffffff; border: 1px solid transparent; padding: 0 13px; min-height: 36px; border-radius: 7px; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-danger:hover { background: #a31f1f; } .ds-btn-danger:focus-visible { outline: 2px solid #c62828; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo di testo con etichetta sopra.",
+      "html": "<label class=\"ds-label\">Quantita'<input class=\"ds-input\" value=\"12\"></label>",
+      "css": ".ds-label { display: block; font-size: 0.875rem; font-weight: 500; color: #4b5f53; } .ds-input { display: block; width: 100%; max-width: 420px; margin-top: 6px; padding: 10px 12px; min-height: 42px; border: 1px solid #b4c9ab; border-radius: 7px; font: inherit; font-size: 0.9375rem; background: #f6faf3; color: #16241a; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input:hover { border-color: #1e7a3c; } .ds-input:focus { outline: none; border-color: #1e7a3c; box-shadow: 0 0 0 3px rgba(30,122,60,0.2); }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Barra laterale verde scurissimo con voce attiva e sottomenu.",
+      "html": "<nav class=\"ds-nav\"><div class=\"ds-nav-section\">Lavoro</div><a href=\"#\" class=\"ds-nav-item\">Giacenze</a><a href=\"#\" class=\"ds-nav-item ds-active\">Storico</a><a href=\"#\" class=\"ds-nav-item\">Archivio</a></nav>",
+      "css": ".ds-nav { width: 248px; background: #0f2519; padding: 18px 12px; display: flex; flex-direction: column; gap: 2px; } .ds-nav-section { color: #9bb8a6; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; padding: 16px 10px 6px; } .ds-nav-item { display: flex; align-items: center; color: #dfeae4; text-decoration: none; padding: 9px 10px; border-radius: 7px; font-size: 0.9375rem; transition: background-color 150ms ease, color 150ms ease; } .ds-nav-item:hover { background: #193523; } .ds-nav-item:focus-visible { outline: 2px solid #8ee09e; outline-offset: -2px; } .ds-nav-item.ds-active { background: #1f4a31; color: #ffffff; font-weight: 600; }"
+    },
+    {
+      "name": "Card with Table",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Card tabella a filo con testata verde profondo.",
+      "html": "<div class=\"ds-card\"><table class=\"ds-table\"><thead><tr><th>Materiale</th><th class=\"ds-num\">Giacenza</th></tr></thead><tbody><tr><td>Granulo</td><td class=\"ds-num\">120</td></tr><tr><td>Rete</td><td class=\"ds-num\">8</td></tr></tbody></table></div>",
+      "css": ".ds-card { background: #f6faf3; border: 1px solid #cddcc5; border-radius: 10px; box-shadow: 0 1px 2px rgba(22,36,26,0.06), 0 2px 8px rgba(22,36,26,0.04); overflow: hidden; } .ds-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; } .ds-table th, .ds-table td { text-align: left; padding: 11px 12px; border-bottom: 1px solid #cddcc5; font-size: 0.9375rem; } .ds-table th { background: #e0ecda; color: #145a2b; font-weight: 650; font-size: 0.875rem; } .ds-table .ds-num { text-align: right; } .ds-table tbody tr:hover td { background: rgba(211,232,210,0.45); } .ds-table tr:last-child td { border-bottom: none; }"
+    },
+    {
+      "name": "Step Header",
+      "kind": "custom",
+      "refersTo": "step-number",
+      "description": "Intestazione numerata dei passi di Nuovo movimento.",
+      "html": "<h2 class=\"ds-step\"><span class=\"ds-step-n\">1</span>Da dove parte</h2>",
+      "css": ".ds-step { display: flex; align-items: center; gap: 10px; font-size: 1.0625rem; font-weight: 650; margin: 0 0 14px; color: #16241a; } .ds-step-n { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #1e7a3c; color: #ffffff; font-size: 0.875rem; font-weight: 700; }"
+    },
+    {
+      "name": "Summary Banner",
+      "kind": "custom",
+      "refersTo": "summary-banner",
+      "description": "Riepilogo verde tenue prima della conferma.",
+      "html": "<div class=\"ds-summary\">Sposti 12 pezzi da Magazzino a Cantiere.</div>",
+      "css": ".ds-summary { background: #d3e8d2; border: 1px solid #b4c9ab; border-radius: 7px; padding: 12px 16px; font-weight: 500; color: #16241a; }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Popup di esito, verde per successo.",
+      "html": "<div class=\"ds-toast\">Movimento registrato</div>",
+      "css": ".ds-toast { background: #1e7a3c; color: #ffffff; padding: 14px 20px; border-radius: 10px; font-size: 0.9375rem; font-weight: 600; min-width: 220px; box-shadow: 0 1px 3px rgba(14,26,18,0.2), 0 10px 28px rgba(14,26,18,0.22); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Il Campo in Ordine",
+    "overview": "Un gestionale per chi registra spostamenti di materiale per campi sportivi, usato ogni giorno da personale non tecnico su PC desktop. Il sistema e' un campo ben tenuto: superfici verde erba molto chiare, una barra laterale verde quasi nero che fa da bordo del campo, un solo verde pieno per le azioni. Tutto e' piano, leggibile, prevedibile; l'espressivita' cede sempre alla chiarezza.\n\nLa densita' e' da strumento di lavoro: tabelle, filtri e form in card ordinate su una colonna centrale di 1200px. La struttura porta il significato; il colore dice solo stato e azione. Il tema erba sintetica e' letterale in un solo punto, lo sfondo del login.",
+    "keyCharacteristics": [
+      "Verdi con una punta di giallo, mai bianco puro come superficie.",
+      "Un solo accento pieno (verde erba); rosso e giallo solo per esito e pericolo.",
+      "Piatto con ombre minime: l'ombra forte solo per popup e login.",
+      "Font di sistema Segoe UI, scala tipografica corta in rem.",
+      "Movimento breve e leggero, spento con prefers-reduced-motion."
+    ],
+    "rules": [
+      { "name": "The No Pure White Rule", "body": "Nessuna superficie e' #fff: la piu' chiara e' #f6faf3. Il bianco e' ammesso solo come testo o icona su verde pieno, rosso o barra laterale.", "section": "colors" },
+      { "name": "The One Green Rule", "body": "Un solo verde pieno comanda le azioni; gli stati passano per rosso e giallo, mai per un secondo verde.", "section": "colors" },
+      { "name": "The Tinted Neutral Rule", "body": "Ogni grigio e' tirato verso il verde della tavolozza; niente grigi neutri.", "section": "colors" },
+      { "name": "The Short Ladder Rule", "body": "Si usano solo i sei passi della scala (0.78 / 0.875 / 0.9375 / 1.0625 / 1.25 / 1.625rem).", "section": "typography" },
+      { "name": "The Tabular Numbers Rule", "body": "Le tabelle usano cifre tabulari e colonne numeriche allineate a destra.", "section": "typography" },
+      { "name": "The Flat-Until-Floating Rule", "body": "Le superfici di lavoro sono quasi piatte; l'ombra marcata e' per toast e login.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usare solo i token del :root e aggiungerne uno prima di scrivere un valore nuovo.",
+      "Do tenere superfici in verde chiaro (#f6faf3 e piu' scure), mai #fff.",
+      "Do usare il verde erba pieno solo per l'azione principale della vista.",
+      "Do dare ai bersagli cliccabili almeno 36px di altezza (42px per azioni primarie e campi).",
+      "Do far seguire ogni eliminazione da una conferma in due passi e da un toast di esito.",
+      "Do verificare il contrasto del testo su ogni nuovo fondo.",
+      "Do rispettare prefers-reduced-motion per ogni nuova animazione."
+    ],
+    "donts": [
+      "Don't usare le strisce di sfalcio fuori dal login.",
+      "Don't caricare font, icone o script da risorse esterne.",
+      "Don't usare il colore come unico segnale.",
+      "Don't introdurre un secondo accento pieno oltre al verde erba.",
+      "Don't aggiungere ombre marcate alle card di lavoro.",
+      "Don't annidare un button dentro un link: usare a.btn-secondario."
+    ]
+  }
+}

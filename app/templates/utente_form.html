@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nuovo account</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -9,21 +11,24 @@
     <main>
         <h1>Crea nuovo account</h1>
         {% if errore %}
-        <p class="errore">{{ errore }}</p>
+        <p class="errore" role="alert">{{ errore }}</p>
         {% endif %}
         <div class="card">
-        <form method="post" action="/utenti/nuovo">
-            <label>Nome <input type="text" name="nome"></label>
-            <label>Cognome <input type="text" name="cognome"></label>
-            <label>Email <input type="email" name="email"></label>
-            <label>Password provvisoria <input type="password" name="password"></label>
-            <label>Ruolo
-                <select name="ruolo_id">
-                    {% for ruolo in ruoli %}
-                    <option value="{{ ruolo.id }}">{{ ruolo.nome }}</option>
-                    {% endfor %}
-                </select>
-            </label>
+        <form method="post" action="/utenti/nuovo" autocomplete="off">
+            <div class="form-griglia">
+                <label>Nome <input type="text" name="nome" required autofocus></label>
+                <label>Cognome <input type="text" name="cognome" required></label>
+                <label>Email <input type="email" name="email" required></label>
+                <label>Password provvisoria <input type="password" name="password" autocomplete="new-password" required></label>
+                <label>Ruolo
+                    <select name="ruolo_id" required>
+                        {% for ruolo in ruoli %}
+                        <option value="{{ ruolo.id }}">{{ ruolo.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+            <p class="meta nota-form">La persona potrà cambiare la password da sola, dal suo nome in fondo al menu laterale.</p>
             <button type="submit">Crea account</button>
         </form>
         </div>

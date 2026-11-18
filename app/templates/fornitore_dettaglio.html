@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ fornitore.nome }}</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -10,24 +12,34 @@
         <h1>{{ fornitore.nome }}{% if fornitore.descrizione %} <small>— {{ fornitore.descrizione }}</small>{% endif %}</h1>
         <div class="card">
             <h2>Contatti</h2>
-            <p><strong>Referente 1:</strong> {{ fornitore.referente_1 or "—" }}</p>
-            <p><strong>Referente 2:</strong> {{ fornitore.referente_2 or "—" }}</p>
-            <p><strong>Email generale:</strong> {{ fornitore.email_generale or "—" }}</p>
-            <p><strong>Email commerciale:</strong> {{ fornitore.email_commerciale or "—" }}</p>
-            <p><strong>Email tecnico:</strong> {{ fornitore.email_tecnico or "—" }}</p>
-            <p><strong>Email amministrazione:</strong> {{ fornitore.email_amministrazione or "—" }}</p>
-            <p><strong>Telefono fisso:</strong> {{ fornitore.telefono_fisso or "—" }}</p>
-            <p><strong>Cellulare 1:</strong> {{ fornitore.cellulare_1 or "—" }}</p>
-            <p><strong>Cellulare 2:</strong> {{ fornitore.cellulare_2 or "—" }}</p>
+            <dl class="elenco-dati">
+                <div><dt>Referente 1</dt><dd>{{ fornitore.referente_1 or "—" }}</dd></div>
+                <div><dt>Referente 2</dt><dd>{{ fornitore.referente_2 or "—" }}</dd></div>
+                <div><dt>Email generale</dt><dd>{{ fornitore.email_generale or "—" }}</dd></div>
+                <div><dt>Email commerciale</dt><dd>{{ fornitore.email_commerciale or "—" }}</dd></div>
+                <div><dt>Email tecnico</dt><dd>{{ fornitore.email_tecnico or "—" }}</dd></div>
+                <div><dt>Email amministrazione</dt><dd>{{ fornitore.email_amministrazione or "—" }}</dd></div>
+                <div><dt>Telefono fisso</dt><dd>{{ fornitore.telefono_fisso or "—" }}</dd></div>
+                <div><dt>Cellulare 1</dt><dd>{{ fornitore.cellulare_1 or "—" }}</dd></div>
+                <div><dt>Cellulare 2</dt><dd>{{ fornitore.cellulare_2 or "—" }}</dd></div>
+            </dl>
+            <div class="barra-azioni staccata">
+                <a href="/fornitori/{{ fornitore.id }}/modifica" class="btn-secondario">Modifica fornitore</a>
+                <a href="/fornitori-elenco">Tutti i fornitori e prodotti</a>
+            </div>
         </div>
         <div class="card">
             <h2>Materiali forniti</h2>
+            {% if materiali %}
             <table>
-                <tr><th>Prodotto/materiale</th></tr>
+                <tr><th>Prodotto/materiale</th><th>Unità</th></tr>
                 {% for materiale in materiali %}
-                <tr><td>{{ materiale.nome }}</td></tr>
+                <tr><td>{{ materiale.nome }}</td><td>{{ materiale.unita_misura.nome }}</td></tr>
                 {% endfor %}
             </table>
+            {% else %}
+            <p class="vuoto"><strong>Nessun materiale per questo fornitore</strong>Aggiungilo da <a href="/materiali/nuovo">Aggiungi dati → Materiale</a>.</p>
+            {% endif %}
         </div>
     </main>
 </body>

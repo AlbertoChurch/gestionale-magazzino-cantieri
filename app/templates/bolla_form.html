@@ -1,30 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Inserimento materiale (bolla)</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
 <body>
     {% include "_nav.html" %}
     <main>
-        <h1>Inserimento materiale (bolla)</h1>
+        <h1>Inserimento materiale</h1>
+        <p class="meta sottotitolo">Primo passo: i dati della bolla. Nel passo dopo aggiungi i materiali arrivati.</p>
+        {% if not fornitori %}
         <div class="card">
-        <form method="post" action="/bolle/nuovo">
-            <label>Fornitore
-                <select name="fornitore_id">
-                    {% for fornitore in fornitori %}
-                    <option value="{{ fornitore.id }}">{{ fornitore.nome }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label>Data <input type="date" name="data"></label>
-            <label>Numero ordine di riferimento <input type="text" name="numero_ordine_riferimento"></label>
-            <label>Numero bolla <input type="text" name="numero"></label>
-            <label>Firmato/accettato da <input type="text" name="firmatario"></label>
-            <label>Scaricato da (nomi) <input type="text" name="operatori_scarico"></label>
+            <p class="vuoto"><strong>Prima serve almeno un fornitore</strong>Aggiungilo da <a href="/fornitori/nuovo">Aggiungi dati → Fornitore</a>, poi torna qui.</p>
+        </div>
+        {% else %}
+        <div class="card">
+        <form method="post" action="/bolle/nuovo" autocomplete="off">
+            <div class="form-griglia">
+                <label>Fornitore
+                    <select name="fornitore_id" required autofocus>
+                        <option value="">Seleziona un fornitore</option>
+                        {% for fornitore in fornitori %}
+                        <option value="{{ fornitore.id }}">{{ fornitore.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Numero bolla <input type="text" name="numero" required></label>
+                <label>Data <input type="date" id="data-bolla" name="data"></label>
+                <label>Numero ordine di riferimento <input type="text" name="numero_ordine_riferimento"></label>
+                <label>Firmato/accettato da <input type="text" name="firmatario"></label>
+                <label>Scaricato da (nomi) <input type="text" name="operatori_scarico"></label>
+            </div>
             <button type="submit">Crea bolla e aggiungi materiali</button>
         </form>
         </div>
+        {% endif %}
     </main>
+    <script>
+        const campoData = document.getElementById('data-bolla');
+        if (campoData) campoData.value = new Date().toLocaleDateString('sv-SE');
+    </script>
 </body>
 </html>

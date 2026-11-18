@@ -1,43 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Archivio</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
 <body>
     {% include "_nav.html" %}
     <main>
-        <h1>Archivio</h1>
-        <p style="color:var(--muted);">Bolle più vecchie di 12 mesi.</p>
+        <h1>Archivio bolle</h1>
+        <p class="meta sottotitolo">Bolle più vecchie di 12 mesi.</p>
 
         {% if not bolle %}
-        <p>Nessuna bolla in archivio.</p>
-        {% else %}
         <div class="card">
-            <label>Cerca (fornitore, numero, ordine, firmatario, materiale...)
-                <input type="text" id="ricerca-bolle" oninput="filtraBolle(this.value)" placeholder="scrivi per filtrare...">
+            <p class="vuoto"><strong>Nessuna bolla in archivio</strong>Qui finiscono le bolle quando superano i 12 mesi.</p>
+        </div>
+        {% else %}
+        <div class="card filtri-storico">
+            <label>Cerca
+                <input type="search" id="ricerca-bolle" oninput="filtraBolle(this.value)" placeholder="fornitore, numero, ordine, firmatario, materiale...">
             </label>
         </div>
-        <p id="nessun-risultato" style="display:none; color:var(--muted);">Nessuna bolla corrisponde alla ricerca.</p>
+        <p id="nessun-risultato" class="vuoto" style="display:none;"><strong>Nessuna bolla corrisponde alla ricerca</strong>Prova con meno parole.</p>
         {% endif %}
 
         {% for bolla in bolle %}
-        <div class="card" data-cerca="{{ (bolla.numero ~ ' ' ~ bolla.fornitore.nome ~ ' ' ~ (bolla.numero_ordine_riferimento or '') ~ ' ' ~ (bolla.firmatario or '') ~ ' ' ~ (bolla.operatori_scarico or '') ~ ' ' ~ (lotti_per_bolla.get(bolla.id, []) | map(attribute='materiale.nome') | join(' '))) | lower }}">
-            <h2><a href="/fornitori/{{ bolla.fornitore.id }}">{{ bolla.fornitore.nome }}</a> <span style="font-weight:400; color:var(--muted);">— bolla {{ bolla.numero }} — {{ bolla.data }}</span></h2>
-            <p>Ordine di riferimento: {{ bolla.numero_ordine_riferimento or "—" }}</p>
-            <p>Firmato/accettato da: {{ bolla.firmatario or "—" }} — Scaricato da: {{ bolla.operatori_scarico or "—" }}</p>
-            <table>
-                <tr><th>Prodotto/materiale</th><th>Quantità</th><th>Unità</th><th>Stato</th></tr>
-                {% for lotto in lotti_per_bolla.get(bolla.id, []) %}
-                <tr>
-                    <td>{{ lotto.materiale.nome }}</td>
-                    <td>{{ lotto.quantita_iniziale }}</td>
-                    <td>{{ lotto.materiale.unita_misura.nome }}</td>
-                    <td>{{ lotto.condizione_iniziale.nome if lotto.condizione_iniziale else "—" }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
+        {% include "_bolla_card.html" %}
         {% endfor %}
     </main>
     <script>

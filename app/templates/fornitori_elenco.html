@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Fornitori e prodotti</title>
     <link rel="stylesheet" href="/static/style.css?v={{ versione_css() }}">
 </head>
@@ -11,18 +13,23 @@
 
         <div class="card filtri-storico">
             <label>Fornitore
-                <select id="f-fornitore" onchange="filtraFornitori()"><option value="">-- tutti --</option></select>
+                <select id="f-fornitore" onchange="filtraFornitori()"><option value="">Tutti</option></select>
             </label>
             <label>Prodotto
-                <select id="f-prodotto" onchange="filtraFornitori()"><option value="">-- tutti --</option></select>
+                <select id="f-prodotto" onchange="filtraFornitori()"><option value="">Tutti</option></select>
             </label>
             <label>Cerca
-                <input type="text" id="f-cerca" oninput="filtraFornitori()" placeholder="cerca fornitore, cosa vende o prodotto...">
+                <input type="search" id="f-cerca" oninput="filtraFornitori()" placeholder="fornitore, cosa vende o prodotto...">
             </label>
-            <button type="button" onclick="azzeraFiltriFornitori()">Azzera filtri</button>
+            <button type="button" class="btn-secondario grande" onclick="azzeraFiltriFornitori()">Azzera filtri</button>
         </div>
 
+        {% if not fornitori %}
         <div class="card">
+            <p class="vuoto"><strong>Nessun fornitore inserito</strong>Aggiungine uno da <a href="/fornitori/nuovo">Aggiungi dati → Fornitore</a>.</p>
+        </div>
+        {% else %}
+        <div class="card card-tabella">
         <table>
             <tr>
                 <th>Fornitore</th>
@@ -52,8 +59,9 @@
                 {% endif %}
             {% endfor %}
         </table>
-        <p id="nessun-risultato-fornitori" style="display:none; color:var(--muted);">Nessun fornitore/prodotto corrisponde ai filtri.</p>
+        <p id="nessun-risultato-fornitori" class="vuoto" style="display:none;"><strong>Nessun fornitore o prodotto corrisponde ai filtri</strong>Cambia i filtri o premi "Azzera filtri".</p>
         </div>
+        {% endif %}
     </main>
     <script>
         function popolaSelect(id, campo) {
@@ -86,7 +94,8 @@
                 riga.style.display = ok ? '' : 'none';
                 if (ok) visibili++;
             });
-            document.getElementById('nessun-risultato-fornitori').style.display = (visibili === 0) ? 'block' : 'none';
+            const messaggio = document.getElementById('nessun-risultato-fornitori');
+            if (messaggio) messaggio.style.display = (visibili === 0) ? 'block' : 'none';
         }
 
         function azzeraFiltriFornitori() {

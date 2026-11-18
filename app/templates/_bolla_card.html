@@ -1,0 +1,24 @@
+<div class="card" id="bolla-{{ bolla.id }}" data-cerca="{{ (bolla.numero ~ ' ' ~ bolla.fornitore.nome ~ ' ' ~ (bolla.numero_ordine_riferimento or '') ~ ' ' ~ (bolla.firmatario or '') ~ ' ' ~ (bolla.operatori_scarico or '') ~ ' ' ~ (lotti_per_bolla.get(bolla.id, []) | map(attribute='materiale.nome') | join(' '))) | lower }}">
+    <div class="bolla-testa">
+        <h2><a href="/fornitori/{{ bolla.fornitore.id }}">{{ bolla.fornitore.nome }}</a></h2>
+        <span class="meta">Bolla {{ bolla.numero }} · {{ bolla.data.strftime('%d/%m/%Y') if bolla.data else "senza data" }}</span>
+    </div>
+    <p class="dati-riga">
+        <span>Ordine di riferimento: <strong>{{ bolla.numero_ordine_riferimento or "—" }}</strong></span>
+        <span>Firmato/accettato da: <strong>{{ bolla.firmatario or "—" }}</strong></span>
+        <span>Scaricato da: <strong>{{ bolla.operatori_scarico or "—" }}</strong></span>
+    </p>
+    <table>
+        <tr><th>Prodotto/materiale</th><th class="num">Quantità</th><th>Unità</th><th>Condizione</th></tr>
+        {% for lotto in lotti_per_bolla.get(bolla.id, []) %}
+        <tr>
+            <td>{{ lotto.materiale.nome }}</td>
+            <td class="num">{{ lotto.quantita_iniziale }}</td>
+            <td>{{ lotto.materiale.unita_misura.nome }}</td>
+            <td>{{ lotto.condizione_iniziale.nome if lotto.condizione_iniziale else "—" }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="meta">Nessun materiale in questa bolla. <a href="/bolle/{{ bolla.id }}/lotti/nuovo">Aggiungi materiali</a></td></tr>
+        {% endfor %}
+    </table>
+</div>

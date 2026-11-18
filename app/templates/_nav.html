@@ -1,8 +1,11 @@
 <nav>
     <div class="nav-scroll">
     <div class="nav-brand">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 9v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/></svg>
-        <span>Gestionale</span>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M12 5v14"/><circle cx="12" cy="12" r="2.8"/></svg>
+        <div class="nav-brand-testo">
+            <strong>Gestionale</strong>
+            <span>Magazzino e cantieri</span>
+        </div>
     </div>
 
     <div class="nav-section">Operativo</div>
@@ -81,8 +84,10 @@
     </a>
     </div>
 </nav>
-<div id="toast-container"></div>
+<div id="toast-container" aria-live="polite"></div>
 <script>
+    // Eliminazione a due passi: il secondo passo ("Sei sicuro?") torna da solo
+    // al pulsante normale dopo 5 secondi o con Esc, cosi' non resta armato.
     function chiediConferma(bottone) {
         const conferma = document.createElement('button');
         conferma.type = 'submit';
@@ -90,6 +95,20 @@
         conferma.textContent = 'Sei sicuro?';
         bottone.replaceWith(conferma);
         conferma.focus();
+        // Il "Sei sicuro?" appare nello stesso punto di "Elimina": un doppio
+        // clic non deve confermare da solo, quindi ignora i clic nei primi 600 ms.
+        const aperturaConferma = Date.now();
+        conferma.addEventListener('click', function (evento) {
+            if (Date.now() - aperturaConferma < 600) evento.preventDefault();
+        });
+        const annulla = function () {
+            clearTimeout(timer);
+            conferma.removeEventListener('keydown', suTasto);
+            if (conferma.isConnected) conferma.replaceWith(bottone);
+        };
+        const suTasto = function (evento) { if (evento.key === 'Escape') { annulla(); bottone.focus(); } };
+        const timer = setTimeout(annulla, 5000);
+        conferma.addEventListener('keydown', suTasto);
     }
 
     function mostraModificaInline(bottone) {
@@ -110,10 +129,12 @@
         const eraAperto = bottone.classList.contains('espanso');
         document.querySelectorAll('.nav-toggle.espanso').forEach(function (altro) {
             altro.classList.remove('espanso');
+            altro.setAttribute('aria-expanded', 'false');
             altro.nextElementSibling.classList.remove('aperto');
         });
         if (!eraAperto) {
             bottone.classList.add('espanso');
+            bottone.setAttribute('aria-expanded', 'true');
             const sottomenu = bottone.nextElementSibling;
             sottomenu.classList.add('aperto');
             sottomenu.addEventListener('transitionend', function scorriAFineApertura(evento) {
@@ -124,6 +145,29 @@
         }
     }
 
+    // Stato iniziale accessibile: voce attiva e sottomenu aperti/chiusi.
+    document.querySelectorAll('nav a.attivo').forEach(function (voce) { voce.setAttribute('aria-current', 'page'); });
+    document.querySelectorAll('.nav-toggle').forEach(function (voce) {
+        voce.setAttribute('aria-expanded', voce.classList.contains('espanso') ? 'true' : 'false');
+    });
+
+    // Asterisco rosso sui campi obbligatori (quelli con "required").
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('label').forEach(function (etichetta) {
+            const campo = etichetta.querySelector('input:required, select:required');
+            const testo = etichetta.firstChild;
+            if (!campo || !testo || testo.nodeType !== 3 || !testo.textContent.trim()) return;
+            const asterisco = document.createElement('span');
+            asterisco.className = 'obbl';
+            asterisco.setAttribute('aria-hidden', 'true');
+            asterisco.title = 'Obbligatorio';
+            asterisco.textContent = ' *';
+            testo.after(asterisco);
+        });
+    });
+
+    // Popup di esito: appare dall'alto, si chiude da solo (piu' tardi se e' un
+    // avviso/errore, cosi' c'e' il tempo di leggerlo) o con un click.
     (function mostraPopupEsito() {
         const parametri = new URLSearchParams(location.search);
         const messaggio = parametri.get('flash');
@@ -132,12 +176,19 @@
         const tipo = tipoParametro === 'errore' ? 'toast-errore' : tipoParametro === 'avviso' ? 'toast-avviso' : 'toast-ok';
         const toast = document.createElement('div');
         toast.className = 'toast ' + tipo;
+        toast.setAttribute('role', tipo === 'toast-errore' ? 'alert' : 'status');
         toast.textContent = messaggio;
         document.getElementById('toast-container').appendChild(toast);
-        setTimeout(function () {
-            toast.classList.add('toast-esci');
-            setTimeout(function () { toast.remove(); }, 250);
-        }, 4500);
+        void toast.offsetWidth;
+        toast.classList.add('is-open');
+        const chiudi = function () {
+            if (toast.dataset.chiuso) return;
+            toast.dataset.chiuso = '1';
+            toast.classList.remove('is-open');
+            setTimeout(function () { toast.remove(); }, 300);
+        };
+        toast.addEventListener('click', chiudi);
+        setTimeout(chiudi, tipo === 'toast-ok' ? 4500 : 8000);
         parametri.delete('flash');
         parametri.delete('flash_tipo');
         const query = parametri.toString();
